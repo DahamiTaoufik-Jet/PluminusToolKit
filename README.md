@@ -1,8 +1,8 @@
-# 🧠 Pluminus - Adaptive Combat AI Toolkit
+# Pluminus - Adaptive Combat AI Toolkit
 
 Pluminus est un plugin Unity léger permettant de créer des intelligences artificielles (IA) de combat adaptatives pour des jeux d'action, en utilisant le Machine Learning algorithmique (Q-Learning discret). L'IA apprend en temps réel de ses erreurs et de ses succès.
 
-## 📁 Architecture Actuelle (MVP)
+## Architecture Actuelle (MVP)
 
 Le projet est divisé en trois piliers principaux :
 
@@ -20,7 +20,7 @@ Le projet est divisé en trois piliers principaux :
 *   **`IEnvironmentObserver`** : À implémenter sur votre ennemi pour traduire l'environnement 3D/2D (Distance, HP) en un "État" mathématique simple (un entier).
 *   **`IActionExecutor`** : À implémenter pour permettre au Cerveau de déclencher vos vraies animations Unity (Attaquer, Fuir, Bloquer).
 
-## 🎓 Comment l'IA apprend-elle ? (Concepts d'Apprentissage par Renforcement)
+## Comment l'IA apprend-elle ? (Concepts d'Apprentissage par Renforcement)
 
 ### L'Équation de Bellman
 
@@ -32,12 +32,12 @@ Cela permet à l'IA d'apprendre des séquences d'actions (combos) et d'anticiper
 
 Le comportement et la courbe d'apprentissage de votre IA sont modulables via trois hyperparamètres clés :
 
-*   🏃 **Taux d'Exploration (Epsilon - ε)**
+*  **Taux d'Exploration (Epsilon - ε)**
     *   **Définition :** La probabilité conditionnelle que l'agent choisisse une action aléatoire plutôt que l'action optimale connue.
     *   **En pratique :** Au début de l'entraînement (ε proche de 1), l'agent explore intensivement son espace d'état. Grâce au paramètre de "Decay", cet Epsilon diminue progressivement. En fin de cycle, l'agent privilégie purement l'Exploitation (ε proche de 0) en exécutant la politique (policy) optimale qu'il a calculée.
-*   🧠 **Taux d'Apprentissage (Alpha - α)**
+*  **Taux d'Apprentissage (Alpha - α)**
     *   **Définition :** Le poids accordé aux nouvelles informations acquises par rapport aux connaissances passées.
     *   **En pratique :** Un Alpha bas (ex: 0.1) créera une IA robuste dont les convictions évoluent lentement au fil de multiples itérations. Un Alpha élevé (ex: 0.9) créera une IA hyper-réactive qui écrasera immédiatement sa stratégie précédente à la moindre erreur constatée.
-*   🔭 **Facteur d'Escompte (Gamma - γ)**
+*  **Facteur d'Escompte (Gamma - γ)**
     *   **Définition :** L'importance pondérée accordée aux récompenses futures espérées par rapport aux récompenses immédiates.
     *   **En pratique :** Un Gamma à 0 force l'agent à être totalement opportuniste (ne considérant que l'instant T). Un Gamma proche de 1 (ex: 0.9) obligera l'agent à développer des stratégies complexes à long terme, capable de sacrifier une récompense immédiate pour se positionner vers une récompense massive ultérieurement.

@@ -11,23 +11,36 @@ namespace Pluminus.Sensors
     /// </summary>
     public class PluminusUnityStateBuilder : MonoBehaviour, IEnvironmentObserver
     {
-        private PluminusStateSensor[] loadedSensors;
+        private List<PluminusStateSensor> loadedSensors = new List<PluminusStateSensor>();
+
+        public IReadOnlyList<PluminusStateSensor> GetLoadedSensors() => loadedSensors;
 
         private void Awake()
         {
-            // Récupère automatiquement tous les capteurs No-Code empilés sur l'objet !
-            loadedSensors = GetComponents<PluminusStateSensor>();
-            
-            if (loadedSensors.Length == 0)
+            // Récupère d'abord les capteurs locaux (Lui-même et ses enfants)
+            PluminusStateSensor[] childrenSensors = GetComponentsInChildren<PluminusStateSensor>();
+            foreach (var s in childrenSensors)
             {
-                Debug.LogWarning("PluminusUnityStateBuilder: Aucun capteur n'est attaché à ce GameObject. L'état sera toujours 0.");
+                if (!loadedSensors.Contains(s)) loadedSensors.Add(s);
+            }
+            
+            if (loadedSensors.Count == 0)
+            {
+                Debug.LogWarning("PluminusUnityStateBuilder: Aucun capteur n'est attaché. L'état restera toujours 0.");
+            }
+        }
+
+        public void RegisterExternalSensor(PluminusStateSensor externalSensor)
+        {
+            if (externalSensor != null && !loadedSensors.Contains(externalSensor))
+            {
+                loadedSensors.Add(externalSensor);
             }
         }
 
         public int GetMaxStates()
         {
-            if (loadedSensors == null) loadedSensors = GetComponents<PluminusStateSensor>();
-            if (loadedSensors.Length == 0) return 1;
+            if (loadedSensors.Count == 0) return 1;
 
             int totalStates = 1;
             foreach (var sensor in loadedSensors)
@@ -44,17 +57,15 @@ namespace Pluminus.Sensors
 
         public int GetCurrentStateId()
         {
-            if (loadedSensors.Length == 0) return 0;
+            if (loadedSensors.Count == 0) return 0;
 
             int finalStateId = 0;
             int currentMultiplier = 1;
 
-            // Algorithme de combinaison de bases dynamiques
-            // Ex: SensorA a 3 états. SensorB a 2 états. SensorC a 4 états.
-            // finalState = StateA + (StateB * 3) + (StateC * 3 * 2).
-            for (int i = 0; i < loadedSensors.Length; i++)
+            // Arrimage dimensionnel des capteurs connectés
+            for (int i = 0; i < loadedSensors.Count; i++)
             {
-                int sensorState = loadedSensors[i].GetCurrentSubState();
+                int sensorState = loadedSensors[i].GetStateWithDebug();
                 int maxSubStates = loadedSensors[i].GetSubStateCount();
 
                 // Sécurité

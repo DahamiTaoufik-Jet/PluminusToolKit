@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using Pluminus.Data;
 using Pluminus.Integration;
 
@@ -20,6 +21,10 @@ namespace Pluminus.Core
         [Header("Persistance (Optionnel)")]
         [Tooltip("Le fichier de sauvegarde (QTableData) contenant la mémoire entraînée de l'IA.")]
         public QTableData memoryAsset;
+
+        [Header("No-Code Events")]
+        [Tooltip("Déclenché à chaque fois que l'IA exécute une action (Renvoie l'ID de l'action).")]
+        public UnityEvent<int> OnActionExecuted;
 
         // Les modules développés par le joueur pour lier son jeu à l'IA
         private IEnvironmentObserver environmentObserver;
@@ -93,6 +98,7 @@ namespace Pluminus.Core
             
             // 4. AGIR dans le jeu
             actionExecutor.ExecuteAction(chosenAction);
+            if (OnActionExecuted != null) OnActionExecuted.Invoke(chosenAction);
 
             // 5. Mémoriser ce qu'on vient de faire pour pouvoir apprendre la prochaine fois
             previousState = currentState;

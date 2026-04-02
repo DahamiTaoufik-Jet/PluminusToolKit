@@ -20,9 +20,9 @@ namespace Pluminus.Sensors.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Capteurs Actifs", EditorStyles.boldLabel);
 
-            PluminusStateSensor[] sensors = builder.GetComponents<PluminusStateSensor>();
+            var sensors = builder.GetLoadedSensors();
             
-            if (sensors.Length == 0)
+            if (sensors == null || sensors.Count == 0)
             {
                 EditorGUILayout.HelpBox("Ajoutez des capteurs (ex: DistanceToTargetSensor) via 'Add Component' pour commencer.", MessageType.Warning);
             }

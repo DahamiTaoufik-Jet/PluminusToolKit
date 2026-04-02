@@ -41,7 +41,13 @@ namespace Pluminus.Examples.MarioAndLuigi
             // L'AdaptiveBrain trouvera tout seul le PluminusUnityStateBuilder attaché pour les observations
             while (true)
             {
-                brain.TickDecision();
+                // FIX MAJEUR D'APPRENTISSAGE : On fige le cerveau de l'IA quand elle est en l'air.
+                // Sinon, pendant sa chute elle va générer 20 décisions "Ne Rien Faire" par seconde.
+                // Et la récompense +5 (Stomp) va récompenser son inaction en l'air au lieu de récompenser son Saut !!
+                if (isGrounded)
+                {
+                    brain.TickDecision();
+                }
                 yield return new WaitForSeconds(decisionTickRate);
             }
         }
@@ -70,8 +76,8 @@ namespace Pluminus.Examples.MarioAndLuigi
             if (actionId == 1 && isGrounded)
             {
                 rb.linearVelocity = new Vector2(0, jumpForce);
-                Debug.Log("<color=grey>IA : *Saut* (Facture d'Énergie envoyée !)</color>");
-                brain.ApplyRewardFlag("JumpTiredness"); 
+                // Le malus 'JumpTiredness' a été supprimé du code !
+                // Il est maintenant géré dynamiquement par le PluminusRuleEngine dans l'Inspecteur !
             }
         }
 
@@ -93,7 +99,18 @@ namespace Pluminus.Examples.MarioAndLuigi
             brain.ApplyRewardFlag("EvadeAir");
         }
 
-        private void OnTriggerEnter2D(Collider2D collision) => HandleHit(collision.gameObject);
+        private void OnTriggerEnter2D(Collider2D collision)
+        {
+            // Sécurité vitale : En Unity, les Colliders des enfants (l'Antenne) font remonter leurs impacts au Rigidbody2D du parent !
+            // On demande explicitement au Collider principal de l'IA (le Corps) s'il est physiquement en contact avec l'ennemi.
+            Collider2D myMainBody = GetComponent<Collider2D>();
+            if (myMainBody != null && !myMainBody.IsTouching(collision))
+            {
+                return; // L'impact a touché l'Antenne, on l'ignore complétement pour l'évaluation des dégâts !
+            }
+
+            HandleHit(collision.gameObject);
+        }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {

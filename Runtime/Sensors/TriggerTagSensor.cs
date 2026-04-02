@@ -13,7 +13,8 @@ namespace Pluminus.Sensors
         [Tooltip("Le Tag de l'objet à détecter dans la zone visuelle")]
         public string targetTag = "Enemy";
 
-        private bool isTriggered = false;
+        private bool isCurrentlyInside = false;
+        private bool pulseMemory = false;
 
         public override int GetSubStateCount()
         {
@@ -22,14 +23,23 @@ namespace Pluminus.Sensors
 
         public override int GetCurrentSubState()
         {
-            return isTriggered ? 1 : 0;
+            // L'IA cligne des yeux toutes les 0.05 secondes.
+            // On s'assure de renvoyer VRAI si l'objet est posé dedans (isCurrentlyInside)
+            // OU si un objet est passé si vite qu'il est déjà reparti depuis le dernier clignement (pulseMemory).
+            bool finalState = isCurrentlyInside || pulseMemory;
+            
+            // On efface la mémoire de l'éclair pour la prochaine observation
+            pulseMemory = false;
+            
+            return finalState ? 1 : 0;
         }
 
         private void OnTriggerStay2D(Collider2D collision)
         {
             if (!string.IsNullOrEmpty(targetTag) && collision.CompareTag(targetTag))
             {
-                isTriggered = true;
+                isCurrentlyInside = true;
+                pulseMemory = true;
             }
         }
 
@@ -37,7 +47,7 @@ namespace Pluminus.Sensors
         {
             if (!string.IsNullOrEmpty(targetTag) && collision.CompareTag(targetTag))
             {
-                isTriggered = false;
+                isCurrentlyInside = false;
             }
         }
 

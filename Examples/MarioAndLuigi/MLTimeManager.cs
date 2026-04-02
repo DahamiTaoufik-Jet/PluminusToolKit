@@ -9,7 +9,7 @@ namespace Pluminus.Examples.MarioAndLuigi
     public class MLTimeManager : MonoBehaviour
     {
         [Tooltip("La vitesse de la simulation en mode entraînement intensif")]
-        public float fastForwardSpeed = 30f;
+        public float fastForwardSpeed = 60f;
         
         [Tooltip("La vitesse normale pour observer les résultats de l'IA")]
         public float normalSpeed = 1f;

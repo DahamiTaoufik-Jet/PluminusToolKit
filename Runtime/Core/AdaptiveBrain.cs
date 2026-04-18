@@ -33,12 +33,18 @@ namespace Pluminus.Core
         // Le moteur interne d'apprentissage
         private QLearningEngine learningEngine;
 
+        [Header("Mode Heuristique (Manuel)")]
+        [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
+        public bool useHeuristic = false;
+        
         // Historique court-terme pour l'apprentissage
         private int previousState = -1;
         private int lastActionTaken = -1;
         private float currentEpsilon; // Le taux d'exploration actuel (qui diminue avec le temps)
 
         private float accumulatedReward = 0f; // Les points accumulés depuis la dernière action
+
+        private int heuristicActionId = -1; // L'action injectée par le mode manuel
 
         private void Awake()
         {
@@ -61,6 +67,14 @@ namespace Pluminus.Core
             {
                 currentEpsilon = brainConfig.explorationRate; // Démarre au taux d'exploration choisi
             }
+        }
+
+        /// <summary>
+        /// Injecte une action manuelle pour le mode Heuristique.
+        /// </summary>
+        public void SetHeuristicAction(int actionId)
+        {
+            heuristicActionId = actionId;
         }
 
         /// <summary>
@@ -94,11 +108,23 @@ namespace Pluminus.Core
             accumulatedReward = 0f;
 
             // 3. DECIDER de la prochaine action
-            int chosenAction = learningEngine.DecideAction(currentState, currentEpsilon, actionExecutor.IsActionValid);
+            int chosenAction = -1;
+
+            if (useHeuristic)
+            {
+                chosenAction = heuristicActionId;
+            }
+            else
+            {
+                chosenAction = learningEngine.DecideAction(currentState, currentEpsilon, actionExecutor.IsActionValid);
+            }
             
             // 4. AGIR dans le jeu
-            actionExecutor.ExecuteAction(chosenAction);
-            if (OnActionExecuted != null) OnActionExecuted.Invoke(chosenAction);
+            if (chosenAction != -1)
+            {
+                actionExecutor.ExecuteAction(chosenAction);
+                if (OnActionExecuted != null) OnActionExecuted.Invoke(chosenAction);
+            }
 
             // 5. Mémoriser ce qu'on vient de faire pour pouvoir apprendre la prochaine fois
             previousState = currentState;

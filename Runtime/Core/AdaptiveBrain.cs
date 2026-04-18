@@ -130,6 +130,8 @@ namespace Pluminus.Core
         public QTable GetCurrentQTable() => learningEngine.GetQTable();
         
         public float GetCurrentEpsilon() => currentEpsilon;
+
+        public void SetCurrentEpsilon(float value) => currentEpsilon = value;
         
         // --- Fonctions de Sauvegarde et Chargement ---
 

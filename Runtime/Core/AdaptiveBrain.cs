@@ -65,6 +65,7 @@ namespace Pluminus.Core
         // Nouvelles metrics demandées
         private int positiveRewardCount = 0;
         private int negativeRewardCount = 0;
+        private List<bool> recentRewardHistory = new List<bool>(); // Historique des 100 derniers coups (true=positif)
 
         private void Awake()
         {
@@ -167,15 +168,23 @@ namespace Pluminus.Core
             sessionTotalReward += amount;
 
             // Stats numériques : on regarde le signe
-            if (amount > 0) 
+            if (amount != 0)
             {
-                positiveRewardCount++;
-                if (analyticsData != null) analyticsData.totalPositiveRewards++;
-            }
-            else if (amount < 0) 
-            {
-                negativeRewardCount++;
-                if (analyticsData != null) analyticsData.totalNegativeRewards++;
+                bool isPositive = amount > 0;
+                if (isPositive)
+                {
+                    positiveRewardCount++;
+                    if (analyticsData != null) analyticsData.totalPositiveRewards++;
+                }
+                else
+                {
+                    negativeRewardCount++;
+                    if (analyticsData != null) analyticsData.totalNegativeRewards++;
+                }
+
+                // Historique tournant pour la "Précision Récente"
+                recentRewardHistory.Add(isPositive);
+                if (recentRewardHistory.Count > 100) recentRewardHistory.RemoveAt(0);
             }
 
             if (isTerminal)
@@ -264,6 +273,12 @@ namespace Pluminus.Core
         public int GetPositiveRewards() => positiveRewardCount;
         public int GetNegativeRewards() => negativeRewardCount;
         public float GetLastEpisodeReward() => episodeRewards.Count > 0 ? episodeRewards[episodeRewards.Count - 1] : 0;
+
+        public float GetRecentAccuracy()
+        {
+            if (recentRewardHistory.Count == 0) return 0;
+            return (float)recentRewardHistory.FindAll(h => h).Count / recentRewardHistory.Count * 100f;
+        }
 
         public QTable GetCurrentQTable() => learningEngine.GetQTable();
         

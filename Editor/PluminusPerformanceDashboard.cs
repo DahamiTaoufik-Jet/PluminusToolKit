@@ -67,25 +67,37 @@ namespace Pluminus.EditorTools
         private void DrawStats()
         {
             EditorGUILayout.BeginVertical("box");
-            GUILayout.Label("Statistiques de Session", EditorStyles.boldLabel);
+            GUILayout.Label("Statistiques de Performance", EditorStyles.boldLabel);
             
-            EditorGUILayout.LabelField("Épisodes", selectedBrain.GetTotalEpisodes().ToString());
-            
-            // Calcul de la Précision Globale (Positif vs Négatif)
-            if (selectedBrain.analyticsData != null)
-            {
-                int total = selectedBrain.analyticsData.totalPositiveRewards + selectedBrain.analyticsData.totalNegativeRewards;
-                float accuracy = total > 0 ? (float)selectedBrain.analyticsData.totalPositiveRewards / total * 100f : 0;
-                string color = accuracy > 75 ? "green" : (accuracy > 40 ? "yellow" : "red");
-                EditorGUILayout.LabelField("Précision Globale (Efficacité)", $"<color={color}>{accuracy:F1}%</color> ({selectedBrain.analyticsData.totalPositiveRewards}/{total})", new GUIStyle(EditorStyles.label) { richText = true });
-            }
+            EditorGUILayout.LabelField("Épisodes Totaux", selectedBrain.GetTotalEpisodes().ToString());
 
+            // 1. WINRATE PAR CATEGORIES
+            EditorGUILayout.Space(2);
+            DrawMetricLabel("Winrate Global", (selectedBrain.analyticsData != null ? ((float)selectedBrain.analyticsData.totalSuccesses / Mathf.Max(1, selectedBrain.analyticsData.totalEpisodes) * 100f) : 0));
+            
+            // Winrate 100 derniers
+            var epHistory = selectedBrain.episodeRewards;
+            float recentWinrate = epHistory.Count > 0 ? (float)epHistory.FindAll(r => r > 0).Count / epHistory.Count * 100f : 0;
+            DrawMetricLabel("Winrate (100 derniers éps)", recentWinrate);
+
+            // Précision Coup par Coup (100 derniers)
+            DrawMetricLabel("Précision Récente (100 coups)", selectedBrain.GetRecentAccuracy());
+
+            EditorGUILayout.Space(5);
+
+            // 2. EXPLORATION HAUTE PRECISION
             float epsilon = selectedBrain.GetCurrentEpsilon();
             GUI.color = epsilon > 0.1f ? Color.cyan : Color.green;
-            EditorGUILayout.LabelField("Exploration (Epsilon)", (epsilon * 100f).ToString("F1") + "%");
+            EditorGUILayout.LabelField("Exploration (Epsilon)", (epsilon * 100f).ToString("F5") + "%", EditorStyles.boldLabel);
             GUI.color = Color.white;
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawMetricLabel(string label, float value)
+        {
+            string color = value > 75 ? "green" : (value > 40 ? "yellow" : "red");
+            EditorGUILayout.LabelField(label, $"<color={color}>{value:F1}%</color>", new GUIStyle(EditorStyles.label) { richText = true });
         }
 
         private void DrawGraph()

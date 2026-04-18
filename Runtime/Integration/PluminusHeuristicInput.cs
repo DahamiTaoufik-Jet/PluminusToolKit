@@ -15,7 +15,7 @@ namespace Pluminus.Integration
     /// Contrôleur Heuristique (Manuel).
     /// Permet au joueur de piloter l'agent au clavier pour tester le jeu.
     /// </summary>
-    [AddComponentMenu("Pluminus/Integration/Heuristic Input")]
+    [AddComponentMenu("Pluminus/Integration/Pluminus Heuristic Input")]
     public class PluminusHeuristicInput : MonoBehaviour
     {
         private AdaptiveBrain brain;

@@ -16,7 +16,7 @@ namespace Pluminus.Integration
     /// Mode 'Simulation de Manette' : Utilise le Bitmasking pour déclencher plusieurs actions simultanément.
     /// Action 1 (Bouton 0), Action 2 (Bouton 1), Action 3 (Bouton 0 + 1), etc.
     /// </summary>
-    [AddComponentMenu("Pluminus/Integration/Virtual Gamepad")]
+    [AddComponentMenu("Pluminus/Integration/Pluminus Virtual Gamepad")]
     public class PluminusVirtualGamepad : MonoBehaviour, IActionExecutor
     {
         [Header("Boutons de la Manette")]

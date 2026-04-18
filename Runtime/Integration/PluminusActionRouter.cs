@@ -9,7 +9,7 @@ namespace Pluminus.Integration
     /// Mode 'Simulation Brute' : Mappe un ID d'action directement vers un UnityEvent à l'index correspondant.
     /// Idéal pour les Boss de RPG ou les IA avec des attaques discrètes.
     /// </summary>
-    [AddComponentMenu("Pluminus/Integration/Action Router")]
+    [AddComponentMenu("Pluminus/Integration/Pluminus Action Router")]
     public class PluminusActionRouter : MonoBehaviour, IActionExecutor
     {
         [Header("Liste des Actions")]

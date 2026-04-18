@@ -9,7 +9,7 @@ namespace Pluminus.Integration
     /// Ce script sert de 'colle' entre votre personnage et Pluminus sans que vous ayez à coder.
     /// Il gère le rythme de décision (Tick) et la réinitialisation (Soft Reset).
     /// </summary>
-    [AddComponentMenu("Pluminus/Integration/Agent Manager")]
+    [AddComponentMenu("Pluminus/Integration/Pluminus Agent Manager")]
     public class PluminusAgentManager : MonoBehaviour
     {
         [Header("Cible")]

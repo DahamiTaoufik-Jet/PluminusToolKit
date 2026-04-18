@@ -16,7 +16,7 @@ namespace Pluminus.Sensors
 
         [Header("Direction (Angles)")]
         [Tooltip("Rotation de la vue en degrés (X=Haut/Bas, Y=Gauche/Droite)")]
-        public Vector3 eulerAngles = Vector3.zero;
+        public Vector2 directionAngles = Vector2.zero;
 
         public override int GetSubStateCount() => 2;
 
@@ -32,8 +32,8 @@ namespace Pluminus.Sensors
 
         private Vector3 GetDirection()
         {
-            // On calcule la direction basée sur la rotation de l'objet + les angles personnalisés
-            return transform.rotation * Quaternion.Euler(eulerAngles) * Vector3.forward;
+            // On calcule la direction basée sur la rotation de l'objet + les angles X et Y
+            return transform.rotation * Quaternion.Euler(directionAngles.x, directionAngles.y, 0) * Vector3.forward;
         }
 
         private void OnDrawGizmosSelected()

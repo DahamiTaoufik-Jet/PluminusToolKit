@@ -5,7 +5,7 @@ namespace Pluminus.Sensors.Extended
     [AddComponentMenu("Pluminus/Sensors/Contact Sensor (Multi-Shape)")]
     public class ContactSensor : PluminusStateSensor
     {
-        public enum ShapeType { Sphere, Box, Diamond }
+        public enum ShapeType { Sphere, Box }
 
         [Header("Forme")]
         public ShapeType shape = ShapeType.Sphere;
@@ -30,11 +30,6 @@ namespace Pluminus.Sensors.Extended
                 case ShapeType.Box:
                     hit = Physics.CheckBox(worldPos, size / 2f, transform.rotation, obstacleMask);
                     break;
-                case ShapeType.Diamond:
-                    // Un losange est une boîte pivotée de 45 degrés
-                    Quaternion diamondRotation = transform.rotation * Quaternion.Euler(0, 45, 0);
-                    hit = Physics.CheckBox(worldPos, size / 2f, diamondRotation, obstacleMask);
-                    break;
             }
 
             return hit ? 1 : 0;
@@ -56,11 +51,6 @@ namespace Pluminus.Sensors.Extended
                     break;
                 case ShapeType.Box:
                     Gizmos.matrix = Matrix4x4.TRS(worldPos, transform.rotation, Vector3.one);
-                    Gizmos.DrawCube(Vector3.zero, size);
-                    Gizmos.DrawWireCube(Vector3.zero, size);
-                    break;
-                case ShapeType.Diamond:
-                    Gizmos.matrix = Matrix4x4.TRS(worldPos, transform.rotation * Quaternion.Euler(0, 45, 0), Vector3.one);
                     Gizmos.DrawCube(Vector3.zero, size);
                     Gizmos.DrawWireCube(Vector3.zero, size);
                     break;

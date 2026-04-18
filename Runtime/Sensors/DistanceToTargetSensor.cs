@@ -1,31 +1,31 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Pluminus.Sensors
 {
     /// <summary>
-    /// Capteur de Distance.
-    /// Découpe la distance vers une cible en anneaux (Corps à corps, Portée moyenne, etc.).
+    /// Capteur de Distance Flexible.
+    /// Découpe la distance vers une cible en autant de zones que souhaité.
     /// </summary>
-    [AddComponentMenu("Pluminus/Sensors/Distance Local Sensor")]
+    [AddComponentMenu("Pluminus/Sensors/Distance Sensor (List)")]
     public class DistanceToTargetSensor : PluminusStateSensor
     {
         [Header("Cible (Target)")]
-        [Tooltip("La cible à mesurer. Si vide et 'Auto-Find' est coché, cherchera le Player.")]
         public Transform target;
         public bool autoFindPlayerTag = true;
 
         [Header("Seuils de Distance")]
-        public float meleeRange = 2f;
-        public float midRange = 5f;
-        public float longRange = 10f;
+        [Tooltip("Ajoutez vos paliers de distance ici (ex: 2, 5, 10, 20).")]
+        public List<float> thresholds = new List<float> { 2f, 5f, 10f };
 
         [Header("Visualisation")]
         public bool showGizmos = true;
 
         public override int GetSubStateCount()
         {
-            // 5 états : 0=Pas de cible, 1=CàC, 2=Moyen, 3=Long, 4=Hors de vue
-            return 5;
+            // N seuils = N+1 états (0=Cible manquante, puis état par zone)
+            if (target == null) return 1;
+            return thresholds.Count + 1;
         }
 
         protected override void Awake()
@@ -36,6 +36,8 @@ namespace Pluminus.Sensors
                 GameObject player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null) target = player.transform;
             }
+            // Tri automatique par sécurité
+            thresholds.Sort();
         }
 
         public override int GetCurrentSubState()
@@ -44,25 +46,24 @@ namespace Pluminus.Sensors
 
             float dist = Vector3.Distance(transform.position, target.position);
 
-            if (dist <= meleeRange) return 1;
-            if (dist <= midRange) return 2;
-            if (dist <= longRange) return 3;
-            return 4;
+            for (int i = 0; i < thresholds.Count; i++)
+            {
+                if (dist <= thresholds[i]) return i + 1;
+            }
+
+            return thresholds.Count + 1; // Hors de portée (dernière zone)
         }
 
         private void OnDrawGizmosSelected()
         {
             if (!showGizmos) return;
 
-            // Dessine les anneaux de distance
-            Gizmos.color = new Color(0, 1, 0, 0.2f);
-            DrawCircleGizmo(meleeRange);
-            
-            Gizmos.color = new Color(1, 1, 0, 0.15f);
-            DrawCircleGizmo(midRange);
-            
-            Gizmos.color = new Color(1, 0.5f, 0, 0.1f);
-            DrawCircleGizmo(longRange);
+            for (int i = 0; i < thresholds.Count; i++)
+            {
+                float t = (float)i / thresholds.Count;
+                Gizmos.color = Color.Lerp(Color.green, Color.red, t);
+                DrawCircleGizmo(thresholds[i]);
+            }
 
             if (target != null)
             {

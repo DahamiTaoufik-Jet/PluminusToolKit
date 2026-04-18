@@ -1,24 +1,39 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Pluminus.Sensors.Extended
 {
-    [AddComponentMenu("Pluminus/Sensors/Elevation Sensor")]
+    [System.Serializable]
+    public class LevelConfig
+    {
+        public string label = "Étage";
+        public float heightOffset = 0f; // Hauteur relative au centre
+        public float levelSizeY = 0.5f; // Taille verticale
+        public Vector2 horizontalSize = new Vector2(5f, 5f); // Taille X / Z
+    }
+
+    [AddComponentMenu("Pluminus/Sensors/Elevation Sensor (Multi-Floor)")]
     public class ElevationSensor : PluminusStateSensor
     {
-        [Header("Cible (Target)")]
-        [Tooltip("L'objet à comparer. Si vide et 'Auto-Find' est coché, cherchera le Player.")]
+        [Header("Cible")]
         public Transform target;
         public bool autoFindPlayerTag = true;
 
-        [Header("Paramètres d'Élévation")]
-        [Tooltip("Marge de tolérance (en unités) pour considérer que les objets sont 'Au même niveau'.")]
-        public float sameLevelTolerance = 0.5f;
+        [Header("Étages (Floors)")]
+        [Tooltip("Configurez vos différents niveaux de détection.")]
+        public List<LevelConfig> floors = new List<LevelConfig> {
+            new LevelConfig { label = "Même Niveau", heightOffset = 0, levelSizeY = 0.5f },
+            new LevelConfig { label = "Étage Supérieur", heightOffset = 3f, levelSizeY = 1.0f }
+        };
 
         [Header("Visualisation")]
         public bool showGizmos = true;
-        public float visualRange = 5f;
 
-        public override int GetSubStateCount() => 4;
+        public override int GetSubStateCount()
+        {
+            // 0 = Aucun étage, 1..N = Index de l'étage
+            return floors.Count + 1;
+        }
 
         protected override void Awake()
         {
@@ -32,47 +47,52 @@ namespace Pluminus.Sensors.Extended
 
         public override int GetCurrentSubState()
         {
-            if (target == null) return 0; // State 0 = Missing Target
+            if (target == null) return 0;
 
-            float diff = target.position.y - transform.position.y;
+            for (int i = 0; i < floors.Count; i++)
+            {
+                if (IsInsideFloor(floors[i])) return i + 1;
+            }
 
-            if (diff > sameLevelTolerance) return 3; // Plus Haut
-            if (diff < -sameLevelTolerance) return 1; // Plus Bas
-            return 2; // Même Niveau
+            return 0; // Hors zones configurées
+        }
+
+        private bool IsInsideFloor(LevelConfig floor)
+        {
+            Vector3 relPos = target.position - transform.position;
+            
+            // Verifie la hauteur
+            float floorBottom = floor.heightOffset - (floor.levelSizeY / 2f);
+            float floorTop = floor.heightOffset + (floor.levelSizeY / 2f);
+            
+            if (relPos.y < floorBottom || relPos.y > floorTop) return false;
+
+            // Verifie l'horizontale (X/Z)
+            if (Mathf.Abs(relPos.x) > floor.horizontalSize.x / 2f) return false;
+            if (Mathf.Abs(relPos.z) > floor.horizontalSize.y / 2f) return false;
+
+            return true;
         }
 
         private void OnDrawGizmosSelected()
         {
             if (!showGizmos) return;
 
-            Vector3 center = transform.position;
-            
-            // Dessine la zone "Même Niveau" (Boîte transparente)
-            Gizmos.color = new Color(0, 1, 0, 0.2f);
-            Gizmos.DrawCube(center, new Vector3(visualRange, sameLevelTolerance * 2f, visualRange));
-            
-            // Dessine les limites haute et basse
-            Gizmos.color = Color.green;
-            Vector3 p1 = center + new Vector3(-visualRange/2, sameLevelTolerance, -visualRange/2);
-            Vector3 p2 = center + new Vector3(visualRange/2, sameLevelTolerance, visualRange/2);
-            // On dessine juste les contours pour la clarté
-            Gizmos.DrawWireCube(center, new Vector3(visualRange, sameLevelTolerance * 2f, visualRange));
+            int currentState = Application.isPlaying ? GetCurrentSubState() : -1;
 
-            if (target != null)
+            for (int i = 0; i < floors.Count; i++)
             {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(center, new Vector3(center.x, target.position.y, center.z));
-                Gizmos.DrawSphere(new Vector3(center.x, target.position.y, center.z), 0.1f);
+                bool isActive = (currentState == i + 1);
+                Gizmos.color = isActive ? new Color(1, 1, 0, 0.6f) : new Color(0, 1, 0, 0.2f);
                 
+                Vector3 floorCenter = transform.position + Vector3.up * floors[i].heightOffset;
+                Vector3 floorSize = new Vector3(floors[i].horizontalSize.x, floors[i].levelSizeY, floors[i].horizontalSize.y);
+                
+                Gizmos.DrawCube(floorCenter, floorSize);
+                Gizmos.DrawWireCube(floorCenter, floorSize);
+
 #if UNITY_EDITOR
-                string stateText = "";
-                switch(GetCurrentSubState())
-                {
-                    case 1: stateText = "Plus Bas"; break;
-                    case 2: stateText = "Même Niveau"; break;
-                    case 3: stateText = "Plus Haut"; break;
-                }
-                UnityEditor.Handles.Label(center + Vector3.up * (sameLevelTolerance + 0.5f), $"Élévation : {stateText}");
+                UnityEditor.Handles.Label(floorCenter + Vector3.up * (floors[i].levelSizeY / 2f), floors[i].label);
 #endif
             }
         }

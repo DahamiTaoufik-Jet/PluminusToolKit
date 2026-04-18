@@ -1,75 +1,63 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Pluminus.Sensors.Extended
 {
     /// <summary>
-    /// Capteur Vectoriel (Vitesse de déplacement).
-    /// Discrétise la force de mouvement du Rigidbody pour des analyses contextuelles (Ex: IA doit esquiver quand l'ennemi court).
+    /// Capteur Vectoriel Flexible.
+    /// Découpe la vitesse de mouvement en zones personnalisables.
     /// </summary>
-    [AddComponentMenu("Pluminus/Sensors/Vector Sensor")]
+    [AddComponentMenu("Pluminus/Sensors/Vector Sensor (Flexible)")]
     public class VectorSensor : PluminusStateSensor
     {
-        [Header("Cible (Qui l'on observe)")]
-        [Tooltip("L'objet avec un Rigidbody dont on veut analyser la vitesse. Laissez vide pour analyser propre parent.")]
+        [Header("Cible")]
         public Rigidbody targetRigidbody;
 
-        [Header("Paramètres de Vitesse")]
-        [Tooltip("Vitesse en dessous de laquelle l'objet est considéré immmobile.")]
-        public float idleThreshold = 0.1f;
-        
-        [Tooltip("Vitesse au dessus de laquelle l'objet est considéré Rapide (entre les deux c'est 'Lent').")]
-        public float fastThreshold = 3.0f;
+        [Header("Paliers de Vitesse (m/s)")]
+        [Tooltip("Ajoutez vos seuils de vitesse ici (ex: 0.1, 2, 5).")]
+        public List<float> speedThresholds = new List<float> { 0.1f, 3.0f };
 
         public override int GetSubStateCount()
         {
-            // 5 états possibles :
-            // 0: Immobile
-            // 1: Avance (Lent)
-            // 2: Avance (Rapide)
-            // 3: Recule (Lent)
-            // 4: Recule (Rapide)
-            return 5;
+            // N seuils = 2(Avance/Recule) * N + 1(Immobile)
+            return (speedThresholds.Count * 2) + 1;
         }
 
         protected override void Awake()
         {
             base.Awake();
-            if (targetRigidbody == null)
-            {
-                targetRigidbody = GetComponentInParent<Rigidbody>();
-            }
+            if (targetRigidbody == null) targetRigidbody = GetComponentInParent<Rigidbody>();
+            speedThresholds.Sort();
         }
 
         public override int GetCurrentSubState()
         {
-            if (targetRigidbody == null) return 0; // Sécurité
+            if (targetRigidbody == null) return 0;
 
             Vector3 worldVelocity = targetRigidbody.velocity;
-
-            // Vitesse pure
             float speed = worldVelocity.magnitude;
 
-            if (speed < idleThreshold)
-            {
-                return 0; // Immobile
-            }
+            // Etat 0 : Immobile (sous le premier seuil)
+            if (speed < speedThresholds[0]) return 0;
 
-            // Pour savoir si l'Agent avance ou recule par rapport à sa propre rotation
-            // On calcule le dot product (produit scalaire) entre sa direction (Forward) et son vecteur de mouvement.
-            // S'il est positif, il avance. S'il est négatif, il recule.
             float directionDot = Vector3.Dot(targetRigidbody.transform.forward, worldVelocity.normalized);
             bool isMovingForward = directionDot >= 0;
 
-            bool isFast = speed > fastThreshold;
+            // Trouve le palier de vitesse
+            int speedLevel = 0;
+            for (int i = 0; i < speedThresholds.Count; i++)
+            {
+                if (speed >= speedThresholds[i]) speedLevel = i;
+            }
 
-            if (isMovingForward)
-            {
-                return isFast ? 2 : 1; // Avance Rapide(2) ou Lent(1)
-            }
-            else
-            {
-                return isFast ? 4 : 3; // Recule Rapide(4) ou Lent(3)
-            }
+            // Calcul de l'index final
+            // Etats pairs = Avance, Etats impairs = Recule ? Non, faisons plus simple :
+            // 0 = Immobile
+            // 1..N = Avance (Lent..Rapide)
+            // N+1..2N = Recule (Lent..Rapide)
+            int n = speedThresholds.Count;
+            if (isMovingForward) return 1 + speedLevel;
+            else return 1 + n + speedLevel;
         }
     }
 }

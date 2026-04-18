@@ -3,44 +3,49 @@ using UnityEngine;
 namespace Pluminus.Sensors
 {
     /// <summary>
-    /// Capteur No-Code qui lance un "Laser" invisible dans une direction.
-    /// Renvoie 1 si le laser touche le tag demandé, 0 sinon.
+    /// Capteur Raycast 3D.
+    /// Lance un rayon dans une direction définie par des angles Euler.
     /// </summary>
+    [AddComponentMenu("Pluminus/Sensors/Raycast Tag Sensor (3D)")]
     public class RaycastTagSensor : PluminusStateSensor
     {
-        [Tooltip("Le Tag de la cible à 'voir'")]
-        public string targetTag = "Enemy";
+        [Header("Détection")]
+        public string targetTag = "Player";
+        public float maxDistance = 10f;
+        public LayerMask obstacleMask = -1;
 
-        [Tooltip("La direction du champ de vision")]
-        public Vector2 rayDirection = Vector2.right;
+        [Header("Direction (Angles)")]
+        [Tooltip("Rotation de la vue en degrés (X=Haut/Bas, Y=Gauche/Droite)")]
+        public Vector3 eulerAngles = Vector3.zero;
 
-        [Tooltip("La longueur de la vue")]
-        public float maxDistance = 5f;
-
-        [Tooltip("Les calques physiques que le rayon peut heurter")]
-        public LayerMask obstacleMask = Physics2D.AllLayers;
-
-        public override int GetSubStateCount()
-        {
-            return 2; // 0 = Ne voit rien, 1 = Voit la cible
-        }
+        public override int GetSubStateCount() => 2;
 
         public override int GetCurrentSubState()
         {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, rayDirection, maxDistance, obstacleMask);
-            
-            if (hit.collider != null && hit.collider.CompareTag(targetTag))
+            Vector3 direction = GetDirection();
+            if (Physics.Raycast(transform.position, direction, out RaycastHit hit, maxDistance, obstacleMask))
             {
-                return 1;
+                if (hit.collider.CompareTag(targetTag)) return 1;
             }
-            
             return 0;
+        }
+
+        private Vector3 GetDirection()
+        {
+            // On calcule la direction basée sur la rotation de l'objet + les angles personnalisés
+            return transform.rotation * Quaternion.Euler(eulerAngles) * Vector3.forward;
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawRay(transform.position, rayDirection.normalized * maxDistance);
+            Vector3 direction = GetDirection();
+            bool isHitting = Application.isPlaying && GetCurrentSubState() == 1;
+
+            Gizmos.color = isHitting ? Color.red : Color.magenta;
+            Gizmos.DrawRay(transform.position, direction * maxDistance);
+            
+            // Dessine une petite pointe pour le "bout" du rayon
+            Gizmos.DrawWireSphere(transform.position + direction * maxDistance, 0.1f);
         }
     }
 }

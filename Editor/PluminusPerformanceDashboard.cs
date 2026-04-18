@@ -96,7 +96,17 @@ namespace Pluminus.EditorTools
             Rect graphRect = GUILayoutUtility.GetRect(200, 200, GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(graphRect, new Color(0.15f, 0.15f, 0.15f));
 
-            var history = showContinuous ? selectedBrain.continuousHistory : selectedBrain.episodeRewards;
+            List<float> history = null;
+            
+            // On essaie de lire depuis l'asset d'analytics pour la persistance
+            if (selectedBrain != null && selectedBrain.analyticsData != null)
+            {
+                history = showContinuous ? selectedBrain.analyticsData.continuousHistory : selectedBrain.analyticsData.episodeRewards;
+            }
+            else if (selectedBrain != null)
+            {
+                history = showContinuous ? selectedBrain.continuousHistory : selectedBrain.episodeRewards;
+            }
             
             if (history == null || history.Count < 2)
             {

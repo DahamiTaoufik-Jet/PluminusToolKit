@@ -53,6 +53,7 @@ namespace Pluminus.Core
 
         // --- Analytics & Performance ---
         [Header("Statistiques d'Apprentissage")]
+        public Pluminus.Data.PluminusAnalyticsData analyticsData;
         public List<float> episodeRewards = new List<float>(); // Historique des scores par épisodes
         public List<float> continuousHistory = new List<float>(); // Historique continu (temps réel)
         private float currentEpisodeTotalReward = 0f;
@@ -176,6 +177,16 @@ namespace Pluminus.Core
             {
                 continuousHistory.Add(sessionTotalReward);
                 if (continuousHistory.Count > 300) continuousHistory.RemoveAt(0); // 5 minutes de stats
+                
+                // Persistance via l'asset
+                if (analyticsData != null) 
+                {
+                    analyticsData.AddContinuousPoint(sessionTotalReward);
+#if UNITY_EDITOR
+                    UnityEditor.EditorUtility.SetDirty(analyticsData);
+#endif
+                }
+
                 statsTimer = 0;
             }
         }

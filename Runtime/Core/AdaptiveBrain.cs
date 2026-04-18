@@ -26,7 +26,12 @@ namespace Pluminus.Core
         [Tooltip("Déclenché à chaque fois que l'IA exécute une action (Renvoie l'ID de l'action).")]
         public UnityEvent<int> OnActionExecuted;
 
-        // Les modules développés par le joueur pour lier son jeu à l'IA
+        [Header("Composants (Auto-détectés)")]
+        [Tooltip("Le script qui observe l'environnement (ex: UnityStateBuilder)")]
+        public MonoBehaviour environmentObserverObject;
+        [Tooltip("Le script qui exécute les actions (ex: VirtualGamepad)")]
+        public MonoBehaviour actionExecutorObject;
+
         private IEnvironmentObserver environmentObserver;
         private IActionExecutor actionExecutor;
         
@@ -48,13 +53,17 @@ namespace Pluminus.Core
 
         private void Awake()
         {
-            // Récupère automatiquement les interfaces sur le GameObject
-            environmentObserver = GetComponent<IEnvironmentObserver>();
-            actionExecutor = GetComponent<IActionExecutor>();
+            // 1. Récupération de l'Observer
+            if (environmentObserverObject != null) environmentObserver = environmentObserverObject as IEnvironmentObserver;
+            if (environmentObserver == null) environmentObserver = GetComponentInChildren<IEnvironmentObserver>();
+
+            // 2. Récupération de l'Executor
+            if (actionExecutorObject != null) actionExecutor = actionExecutorObject as IActionExecutor;
+            if (actionExecutor == null) actionExecutor = GetComponentInChildren<IActionExecutor>();
 
             if (environmentObserver == null || actionExecutor == null)
             {
-                Debug.LogError("Erreur: L'AdaptiveBrain a besoin d'un script implémentant IEnvironmentObserver et d'un script implémentant IActionExecutor sur le même GameObject !");
+                Debug.LogError("Erreur: L'AdaptiveBrain n'a pas trouvé d'IEnvironmentObserver (StateBuilder) ou d'IActionExecutor (Gamepad) sur cet objet ou ses enfants !");
                 enabled = false;
                 return;
             }

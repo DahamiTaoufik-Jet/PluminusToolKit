@@ -18,9 +18,9 @@ namespace Pluminus.Data
         public int totalSuccesses = 0;
         public float bestEpisodeReward = float.MinValue;
 
-        [Header("Global Item Stats")]
-        public int totalGoldCollected = 0;
-        public int totalGoldMissed = 0;
+        [Header("Global Analytics")]
+        public int totalPositiveRewards = 0;
+        public int totalNegativeRewards = 0;
 
         public void Clear()
         {

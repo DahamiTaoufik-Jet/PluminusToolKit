@@ -71,13 +71,13 @@ namespace Pluminus.EditorTools
             
             EditorGUILayout.LabelField("Épisodes", selectedBrain.GetTotalEpisodes().ToString());
             
-            // Calcul de l'Accuracy Gold
+            // Calcul de la Précision Globale (Positif vs Négatif)
             if (selectedBrain.analyticsData != null)
             {
-                int total = selectedBrain.analyticsData.totalGoldCollected + selectedBrain.analyticsData.totalGoldMissed;
-                float accuracy = total > 0 ? (float)selectedBrain.analyticsData.totalGoldCollected / total * 100f : 0;
+                int total = selectedBrain.analyticsData.totalPositiveRewards + selectedBrain.analyticsData.totalNegativeRewards;
+                float accuracy = total > 0 ? (float)selectedBrain.analyticsData.totalPositiveRewards / total * 100f : 0;
                 string color = accuracy > 75 ? "green" : (accuracy > 40 ? "yellow" : "red");
-                EditorGUILayout.LabelField("Précision Gold (Collecte)", $"<color={color}>{accuracy:F1}%</color> ({selectedBrain.analyticsData.totalGoldCollected}/{total})", new GUIStyle(EditorStyles.label) { richText = true });
+                EditorGUILayout.LabelField("Précision Globale (Efficacité)", $"<color={color}>{accuracy:F1}%</color> ({selectedBrain.analyticsData.totalPositiveRewards}/{total})", new GUIStyle(EditorStyles.label) { richText = true });
             }
 
             float epsilon = selectedBrain.GetCurrentEpsilon();

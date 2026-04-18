@@ -63,9 +63,8 @@ namespace Pluminus.Core
         private float statsTimer = 0f;
 
         // Nouvelles metrics demandées
-        private int successCount = 0;
-        private int goldCollected = 0;
-        private int goldMissed = 0;
+        private int positiveRewardCount = 0;
+        private int negativeRewardCount = 0;
 
         private void Awake()
         {
@@ -167,6 +166,18 @@ namespace Pluminus.Core
             currentEpisodeTotalReward += amount;
             sessionTotalReward += amount;
 
+            // Stats numériques : on regarde le signe
+            if (amount > 0) 
+            {
+                positiveRewardCount++;
+                if (analyticsData != null) analyticsData.totalPositiveRewards++;
+            }
+            else if (amount < 0) 
+            {
+                negativeRewardCount++;
+                if (analyticsData != null) analyticsData.totalNegativeRewards++;
+            }
+
             if (isTerminal)
             {
                 EndEpisode();
@@ -202,14 +213,14 @@ namespace Pluminus.Core
         /// </summary>
         public void EndEpisode()
         {
+            // Un épisode est un succès si le score final est positif
             bool wasSuccess = currentEpisodeTotalReward > 0;
-            if (wasSuccess) successCount++;
 
             episodeRewards.Add(currentEpisodeTotalReward);
             if (episodeRewards.Count > 100) episodeRewards.RemoveAt(0);
             
-            // Calcul du Winrate sur les derniers épisodes
-            float currentWinRate = (float)successCount / (totalEpisodes + 1) * 100f;
+            // Calcul du Winrate global (basé sur les épisodes totaux)
+            float currentWinRate = (float)totalEpisodes > 0 ? ((float)episodeRewards.FindAll(r => r > 0).Count / episodeRewards.Count) * 100f : 0;
 
             // Persistance via l'asset
             if (analyticsData != null) 
@@ -240,13 +251,6 @@ namespace Pluminus.Core
         /// <param name="flag">Le nom textuel de l'événement (ex: "TookDamage")</param>
         public void ApplyRewardFlag(string flag)
         {
-            // Stats spécifiques pour Gold Accuracy (Si les IDs contiennent "Gold")
-            if (flag.ToLower().Contains("gold"))
-            {
-                if (flag.ToLower().Contains("collect")) { goldCollected++; if (analyticsData) analyticsData.totalGoldCollected++; }
-                else if (flag.ToLower().Contains("miss")) { goldMissed++; if (analyticsData) analyticsData.totalGoldMissed++; }
-            }
-
             // Cherche la valeur en points liée à ce mot clé dans le RewardProfile
             if (rewardProfile != null && rewardProfile.TryGetReward(flag, out RewardEvent reward))
             {

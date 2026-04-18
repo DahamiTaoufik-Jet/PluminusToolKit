@@ -219,8 +219,8 @@ namespace Pluminus.Core
             episodeRewards.Add(currentEpisodeTotalReward);
             if (episodeRewards.Count > 100) episodeRewards.RemoveAt(0);
             
-            // Calcul du Winrate global (basé sur les épisodes totaux)
-            float currentWinRate = (float)totalEpisodes > 0 ? ((float)episodeRewards.FindAll(r => r > 0).Count / episodeRewards.Count) * 100f : 0;
+            // Calcul du Winrate global basé sur tous les épisodes de la session
+            float currentWinRate = (float)episodeRewards.FindAll(r => r > 0).Count / episodeRewards.Count * 100f;
 
             // Persistance via l'asset
             if (analyticsData != null) 
@@ -261,6 +261,8 @@ namespace Pluminus.Core
         // --- Fonctions Utilitaires ---
 
         public int GetTotalEpisodes() => totalEpisodes;
+        public int GetPositiveRewards() => positiveRewardCount;
+        public int GetNegativeRewards() => negativeRewardCount;
         public float GetLastEpisodeReward() => episodeRewards.Count > 0 ? episodeRewards[episodeRewards.Count - 1] : 0;
 
         public QTable GetCurrentQTable() => learningEngine.GetQTable();

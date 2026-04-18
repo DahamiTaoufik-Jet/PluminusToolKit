@@ -112,9 +112,20 @@ namespace Pluminus.EditorTools
                 else history = selectedBrain.episodeRewards;
             }
             
-            if (history == null || history.Count < 2)
+            if (history == null || history.Count == 0)
             {
-                EditorGUI.LabelField(graphRect, "En attente de données...", EditorStyles.centeredGreyMiniLabel);
+                // Si on est en mode Winrate mais pas encore de morts, on montre le winrate "Live" de session
+                if (graphMode == 2 && selectedBrain != null)
+                {
+                    int pos = selectedBrain.GetPositiveRewards();
+                    int neg = selectedBrain.GetNegativeRewards();
+                    float liveWinRate = (pos + neg) > 0 ? (float)pos / (pos + neg) * 100f : 0;
+                    EditorGUI.LabelField(graphRect, $"Winrate de Session : {liveWinRate:F1}% (Calculé sur les points récoltés)", EditorStyles.centeredGreyMiniLabel);
+                }
+                else
+                {
+                    EditorGUI.LabelField(graphRect, "En attente de données...", EditorStyles.centeredGreyMiniLabel);
+                }
                 return;
             }
 
@@ -126,30 +137,38 @@ namespace Pluminus.EditorTools
                 if (r < min) min = r;
                 if (r > max) max = r;
             }
-            if (max == min) { max += 1; min -= 1; }
+            if (max == min) { max += 10; min -= 10; } // On donne de l'air pour 1 seul point
 
             // Dessin des lignes de grille
             Handles.BeginGUI();
             Handles.color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-            float zeroY = MapToGraph(0, min, max, graphRect);
+            float zeroY = MapToGraph(graphMode == 2 ? 50 : 0, min, max, graphRect); // Ligne 50% pour winrate
             Handles.DrawLine(new Vector2(graphRect.x, zeroY), new Vector2(graphRect.xMax, zeroY));
             Handles.EndGUI();
 
             // Dessin de la courbe
             Handles.BeginGUI();
-            Handles.color = Color.green;
+            Handles.color = graphMode == 2 ? Color.cyan : Color.green;
             
-            Vector3[] points = new Vector3[history.Count];
-            float xStep = graphRect.width / (history.Count - 1);
-            
-            for (int i = 0; i < history.Count; i++)
+            if (history.Count == 1)
             {
-                float x = graphRect.x + (i * xStep);
-                float y = MapToGraph(history[i], min, max, graphRect);
-                points[i] = new Vector3(x, y, 0);
+                // Un seul point : on dessine une ligne horizontale
+                float y = MapToGraph(history[0], min, max, graphRect);
+                Handles.DrawLine(new Vector2(graphRect.x, y), new Vector2(graphRect.xMax, y));
             }
-
-            Handles.DrawPolyLine(points);
+            else
+            {
+                Vector3[] points = new Vector3[history.Count];
+                float xStep = graphRect.width / (history.Count - 1);
+                
+                for (int i = 0; i < history.Count; i++)
+                {
+                    float x = graphRect.x + (i * xStep);
+                    float y = MapToGraph(history[i], min, max, graphRect);
+                    points[i] = new Vector3(x, y, 0);
+                }
+                Handles.DrawPolyLine(points);
+            }
             Handles.EndGUI();
             
             // Labels Min/Max

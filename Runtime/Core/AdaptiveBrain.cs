@@ -53,9 +53,12 @@ namespace Pluminus.Core
 
         // --- Analytics & Performance ---
         [Header("Statistiques d'Apprentissage")]
-        public List<float> episodeRewards = new List<float>(); // Historique des scores
+        public List<float> episodeRewards = new List<float>(); // Historique des scores par épisodes
+        public List<float> continuousHistory = new List<float>(); // Historique continu (temps réel)
         private float currentEpisodeTotalReward = 0f;
+        private float sessionTotalReward = 0f;
         private int totalEpisodes = 0;
+        private float statsTimer = 0f;
 
         private void Awake()
         {
@@ -155,10 +158,25 @@ namespace Pluminus.Core
         {
             accumulatedReward += amount;
             currentEpisodeTotalReward += amount;
+            sessionTotalReward += amount;
 
             if (isTerminal)
             {
                 EndEpisode();
+            }
+        }
+
+        private void Update()
+        {
+            if (!Application.isPlaying) return;
+
+            // Capture de stats pour le mode continu (toutes les secondes)
+            statsTimer += Time.deltaTime;
+            if (statsTimer >= 1.0f)
+            {
+                continuousHistory.Add(sessionTotalReward);
+                if (continuousHistory.Count > 300) continuousHistory.RemoveAt(0); // 5 minutes de stats
+                statsTimer = 0;
             }
         }
 

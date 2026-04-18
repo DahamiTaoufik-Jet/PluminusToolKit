@@ -9,7 +9,7 @@ namespace Pluminus.EditorTools
     {
         private AdaptiveBrain selectedBrain;
         private Vector2 scrollPos;
-        private List<float> smoothRewards = new List<float>();
+        private bool showContinuous = false;
 
         [MenuItem("Window/Pluminus/AI Performance Dashboard")]
         public static void ShowWindow()
@@ -17,23 +17,52 @@ namespace Pluminus.EditorTools
             GetWindow<PluminusPerformanceDashboard>("Pluminus Dashboard");
         }
 
+        private void OnSelectionChange()
+        {
+            if (Selection.activeGameObject != null)
+            {
+                var brain = Selection.activeGameObject.GetComponentInChildren<AdaptiveBrain>();
+                if (brain != null)
+                {
+                    selectedBrain = brain;
+                    Repaint();
+                }
+            }
+        }
+
         private void OnGUI()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label("📊 Pluminus AI Performance", EditorStyles.boldLabel);
             
-            selectedBrain = (AdaptiveBrain)EditorGUILayout.ObjectField("Agent à suivre", selectedBrain, typeof(AdaptiveBrain), true);
+            // Si on n'a rien sélectionné, on essaie de trouver un cerveau par défaut
+            if (selectedBrain == null)
+            {
+                selectedBrain = FindObjectOfType<AdaptiveBrain>();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            selectedBrain = (AdaptiveBrain)EditorGUILayout.ObjectField("Agent Inspecté", selectedBrain, typeof(AdaptiveBrain), true);
+            if (EditorGUI.EndChangeCheck()) Repaint();
+
             EditorGUILayout.EndVertical();
 
             if (selectedBrain == null)
             {
-                EditorGUILayout.HelpBox("Sélectionnez un GameObject avec un AdaptiveBrain pour voir les stats.", MessageType.Info);
+                EditorGUILayout.HelpBox("Sélectionnez un agent (GameObject avec AdaptiveBrain) dans la Hiérarchie.", MessageType.Info);
                 return;
             }
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
             DrawStats();
+            
+            EditorGUILayout.Space();
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Toggle(!showContinuous, "Par Épisodes", "Button")) showContinuous = false;
+            if (GUILayout.Toggle(showContinuous, "Temps Réel (Continu)", "Button")) showContinuous = true;
+            EditorGUILayout.EndHorizontal();
+
             DrawGraph();
 
             EditorGUILayout.EndScrollView();
@@ -61,13 +90,15 @@ namespace Pluminus.EditorTools
         private void DrawGraph()
         {
             EditorGUILayout.Space();
-            GUILayout.Label("Courbe de Récompense (100 derniers épisodes)", EditorStyles.miniBoldLabel);
+            string title = showContinuous ? "Récompense Totale Cumulée (Continu)" : "Scores par Épisodes (100 derniers)";
+            GUILayout.Label(title, EditorStyles.miniBoldLabel);
 
             Rect graphRect = GUILayoutUtility.GetRect(200, 200, GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(graphRect, new Color(0.15f, 0.15f, 0.15f));
 
-            var history = selectedBrain.episodeRewards;
-            if (history.Count < 2)
+            var history = showContinuous ? selectedBrain.continuousHistory : selectedBrain.episodeRewards;
+            
+            if (history == null || history.Count < 2)
             {
                 EditorGUI.LabelField(graphRect, "En attente de données...", EditorStyles.centeredGreyMiniLabel);
                 return;

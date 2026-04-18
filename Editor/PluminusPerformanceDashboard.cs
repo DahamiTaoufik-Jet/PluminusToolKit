@@ -30,9 +30,12 @@ namespace Pluminus.EditorTools
             }
         }
 
+        private double lastRepaintTime;
+
         private void OnGUI()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            // ... (rest of the header logic)
             GUILayout.Label("📊 Pluminus AI Performance", EditorStyles.boldLabel);
             
             if (selectedBrain == null) selectedBrain = FindObjectOfType<AdaptiveBrain>();
@@ -60,8 +63,12 @@ namespace Pluminus.EditorTools
 
             EditorGUILayout.EndScrollView();
 
-            // Auto-repaint pendant le mode Play
-            if (Application.isPlaying) Repaint();
+            // Auto-repaint limité à 10 FPS pour éviter de freezer l'éditeur en x100
+            if (Application.isPlaying && EditorApplication.timeSinceStartup > lastRepaintTime + 0.1)
+            {
+                lastRepaintTime = EditorApplication.timeSinceStartup;
+                Repaint();
+            }
         }
 
         private void DrawStats()

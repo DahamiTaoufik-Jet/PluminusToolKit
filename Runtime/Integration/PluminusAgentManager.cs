@@ -22,6 +22,11 @@ namespace Pluminus.Integration
         public float decisionRate = 0.1f;
         private float timer;
 
+        [Header("Accélérateur de Temps")]
+        [Range(1f, 20f)]
+        [Tooltip("Accélère le temps du jeu pour entraîner l'IA plus vite.")]
+        public float trainingSpeed = 1f;
+
         [Header("Gestion d'Épisode (Reset)")]
         [Tooltip("Point de départ pour le Soft Reset (laisse vide pour utiliser la position au Start).")]
         public Transform startPoint;
@@ -40,6 +45,9 @@ namespace Pluminus.Integration
 
         private void Update()
         {
+            // Applique l'accélérateur de temps
+            if (Time.timeScale != trainingSpeed) Time.timeScale = trainingSpeed;
+
             if (autoTick && brain != null && !brain.useHeuristic)
             {
                 timer += Time.deltaTime;

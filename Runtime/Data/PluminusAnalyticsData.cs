@@ -29,8 +29,8 @@ namespace Pluminus.Data
             winRateHistory.Clear();
             totalEpisodes = 0;
             totalSuccesses = 0;
-            totalGoldCollected = 0;
-            totalGoldMissed = 0;
+            totalPositiveRewards = 0;
+            totalNegativeRewards = 0;
             bestEpisodeReward = float.MinValue;
         }
 

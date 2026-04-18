@@ -28,6 +28,9 @@ namespace Pluminus.Integration
         [Range(1f, 100f)]
         [Tooltip("Accélère le temps du jeu pour entraîner l'IA plus vite.")]
         public float trainingSpeed = 1f;
+        [Tooltip("Si coché, limite les FPS pour éviter que ton PC freeze pendant l'entraînement intensif.")]
+        public bool limitFrameRate = true;
+        public int targetFrameRate = 60;
 
         [Header("Gestion d'Épisode (Reset)")]
         [Tooltip("Point de départ pour le Soft Reset (laisse vide pour utiliser la position au Start).")]
@@ -49,6 +52,20 @@ namespace Pluminus.Integration
         {
             // Applique l'accélérateur de temps
             if (Time.timeScale != trainingSpeed) Time.timeScale = trainingSpeed;
+
+            // Protection Anti-Freeze PC : Limite le CPU/GPU pendant l'entraînement
+            if (limitFrameRate && trainingSpeed > 1f)
+            {
+                if (Application.targetFrameRate != targetFrameRate)
+                {
+                    Application.targetFrameRate = targetFrameRate;
+                    QualitySettings.vSyncCount = 0; // Obligatoire pour laisser la main au targetFrameRate
+                }
+            }
+            else if (Application.targetFrameRate != -1 && trainingSpeed <= 1.1f)
+            {
+                Application.targetFrameRate = -1; // Rend la main à Unity en mode normal
+            }
 
             if (autoTick && brain != null && !brain.useHeuristic)
             {

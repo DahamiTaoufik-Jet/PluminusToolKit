@@ -23,7 +23,7 @@ namespace Pluminus.Integration
         private float timer;
 
         [Header("Accélérateur de Temps")]
-        [Range(1f, 20f)]
+        [Range(1f, 100f)]
         [Tooltip("Accélère le temps du jeu pour entraîner l'IA plus vite.")]
         public float trainingSpeed = 1f;
 

@@ -65,6 +65,8 @@ namespace Pluminus.Integration
         /// </summary>
         public void PerformSoftReset()
         {
+            if (brain != null) brain.EndEpisode();
+
             transform.position = spawnPosition;
             transform.rotation = spawnRotation;
             

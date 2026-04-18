@@ -48,8 +48,13 @@ namespace Pluminus.Core
         private float currentEpsilon; // Le taux d'exploration actuel (qui diminue avec le temps)
 
         private float accumulatedReward = 0f; // Les points accumulés depuis la dernière action
-
         private int heuristicActionId = -1; // L'action injectée par le mode manuel
+
+        // --- Analytics & Performance ---
+        [Header("Statistiques d'Apprentissage")]
+        public List<float> episodeRewards = new List<float>(); // Historique des scores
+        private float currentEpisodeTotalReward = 0f;
+        private int totalEpisodes = 0;
 
         private void Awake()
         {
@@ -141,6 +146,38 @@ namespace Pluminus.Core
         }
 
         /// <summary>
+        /// Ajoute une récompense ou une punition directement depuis votre code.
+        /// </summary>
+        /// <param name="amount">Valeur (positif = bon, négatif = mauvais)</param>
+        /// <param name="isTerminal">Si vrai, l'épisode se termine immédiatement.</param>
+        public void AddReward(float amount, bool isTerminal = false)
+        {
+            accumulatedReward += amount;
+            currentEpisodeTotalReward += amount;
+
+            if (isTerminal)
+            {
+                EndEpisode();
+            }
+        }
+
+        /// <summary>
+        /// Clôture l'épisode actuel et stocke les statistiques.
+        /// </summary>
+        public void EndEpisode()
+        {
+            episodeRewards.Add(currentEpisodeTotalReward);
+            if (episodeRewards.Count > 100) episodeRewards.RemoveAt(0); // Garde les 100 derniers
+            
+            totalEpisodes++;
+            currentEpisodeTotalReward = 0;
+            
+            // Réinitialise l'historique d'apprentissage pour ne pas lier la mort au nouvel état
+            previousState = -1;
+            lastActionTaken = -1;
+        }
+
+        /// <summary>
         /// Méthode à appeler depuis les événements de votre jeu (ex: OnHit, OnDodge) pour donner ou retirer des points à l'IA.
         /// </summary>
         /// <param name="flag">Le nom textuel de l'événement (ex: "TookDamage")</param>
@@ -149,18 +186,14 @@ namespace Pluminus.Core
             // Cherche la valeur en points liée à ce mot clé dans le RewardProfile
             if (rewardProfile != null && rewardProfile.TryGetReward(flag, out RewardEvent reward))
             {
-                accumulatedReward += reward.rewardValue; // Ajoute les points
-
-                // Si c'est un game over (ex: mort), on casse la chaîne d'apprentissage
-                if (reward.isTerminalState)
-                {
-                    previousState = -1;
-                    lastActionTaken = -1;
-                }
+                AddReward(reward.rewardValue, reward.isTerminalState);
             }
         }
 
         // --- Fonctions Utilitaires ---
+
+        public int GetTotalEpisodes() => totalEpisodes;
+        public float GetLastEpisodeReward() => episodeRewards.Count > 0 ? episodeRewards[episodeRewards.Count - 1] : 0;
 
         public QTable GetCurrentQTable() => learningEngine.GetQTable();
         

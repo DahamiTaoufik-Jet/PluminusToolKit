@@ -9,7 +9,7 @@ namespace Pluminus.EditorTools
     {
         private AdaptiveBrain selectedBrain;
         private Vector2 scrollPos;
-        private bool showContinuous = false;
+        private int graphMode = 0; // 0: Episodes, 1: Continuous, 2: Winrate
 
         [MenuItem("Window/Pluminus/AI Performance Dashboard")]
         public static void ShowWindow()
@@ -35,11 +35,7 @@ namespace Pluminus.EditorTools
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUILayout.Label("📊 Pluminus AI Performance", EditorStyles.boldLabel);
             
-            // Si on n'a rien sélectionné, on essaie de trouver un cerveau par défaut
-            if (selectedBrain == null)
-            {
-                selectedBrain = FindObjectOfType<AdaptiveBrain>();
-            }
+            if (selectedBrain == null) selectedBrain = FindObjectOfType<AdaptiveBrain>();
 
             EditorGUI.BeginChangeCheck();
             selectedBrain = (AdaptiveBrain)EditorGUILayout.ObjectField("Agent Inspecté", selectedBrain, typeof(AdaptiveBrain), true);
@@ -49,7 +45,7 @@ namespace Pluminus.EditorTools
 
             if (selectedBrain == null)
             {
-                EditorGUILayout.HelpBox("Sélectionnez un agent (GameObject avec AdaptiveBrain) dans la Hiérarchie.", MessageType.Info);
+                EditorGUILayout.HelpBox("Sélectionnez un agent dans la Hiérarchie.", MessageType.Info);
                 return;
             }
 
@@ -58,10 +54,7 @@ namespace Pluminus.EditorTools
             DrawStats();
             
             EditorGUILayout.Space();
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Toggle(!showContinuous, "Par Épisodes", "Button")) showContinuous = false;
-            if (GUILayout.Toggle(showContinuous, "Temps Réel (Continu)", "Button")) showContinuous = true;
-            EditorGUILayout.EndHorizontal();
+            graphMode = GUILayout.Toolbar(graphMode, new string[] { "Épisodes", "Temps Réel", "Winrate (%)" });
 
             DrawGraph();
 
@@ -74,11 +67,19 @@ namespace Pluminus.EditorTools
         private void DrawStats()
         {
             EditorGUILayout.BeginVertical("box");
-            GUILayout.Label("Statistiques Actuelles", EditorStyles.boldLabel);
+            GUILayout.Label("Statistiques de Session", EditorStyles.boldLabel);
             
-            EditorGUILayout.LabelField("Épisodes totaux", selectedBrain.GetTotalEpisodes().ToString());
-            EditorGUILayout.LabelField("Dernière récompense", selectedBrain.GetLastEpisodeReward().ToString("F2"));
+            EditorGUILayout.LabelField("Épisodes", selectedBrain.GetTotalEpisodes().ToString());
             
+            // Calcul de l'Accuracy Gold
+            if (selectedBrain.analyticsData != null)
+            {
+                int total = selectedBrain.analyticsData.totalGoldCollected + selectedBrain.analyticsData.totalGoldMissed;
+                float accuracy = total > 0 ? (float)selectedBrain.analyticsData.totalGoldCollected / total * 100f : 0;
+                string color = accuracy > 75 ? "green" : (accuracy > 40 ? "yellow" : "red");
+                EditorGUILayout.LabelField("Précision Gold (Collecte)", $"<color={color}>{accuracy:F1}%</color> ({selectedBrain.analyticsData.totalGoldCollected}/{total})", new GUIStyle(EditorStyles.label) { richText = true });
+            }
+
             float epsilon = selectedBrain.GetCurrentEpsilon();
             GUI.color = epsilon > 0.1f ? Color.cyan : Color.green;
             EditorGUILayout.LabelField("Exploration (Epsilon)", (epsilon * 100f).ToString("F1") + "%");
@@ -90,22 +91,25 @@ namespace Pluminus.EditorTools
         private void DrawGraph()
         {
             EditorGUILayout.Space();
-            string title = showContinuous ? "Récompense Totale Cumulée (Continu)" : "Scores par Épisodes (100 derniers)";
-            GUILayout.Label(title, EditorStyles.miniBoldLabel);
+            string[] titles = { "Scores par Épisodes (100 derniers)", "Récompense Totale Cumulée", "Taux de Succès (Winrate %)" };
+            GUILayout.Label(titles[graphMode], EditorStyles.miniBoldLabel);
 
             Rect graphRect = GUILayoutUtility.GetRect(200, 200, GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(graphRect, new Color(0.15f, 0.15f, 0.15f));
 
             List<float> history = null;
             
-            // On essaie de lire depuis l'asset d'analytics pour la persistance
-            if (selectedBrain != null && selectedBrain.analyticsData != null)
+            // Sélecteur de données selon le mode
+            if (selectedBrain.analyticsData != null)
             {
-                history = showContinuous ? selectedBrain.analyticsData.continuousHistory : selectedBrain.analyticsData.episodeRewards;
+                if (graphMode == 2) history = selectedBrain.analyticsData.winRateHistory;
+                else if (graphMode == 1) history = selectedBrain.analyticsData.continuousHistory;
+                else history = selectedBrain.analyticsData.episodeRewards;
             }
-            else if (selectedBrain != null)
+            else
             {
-                history = showContinuous ? selectedBrain.continuousHistory : selectedBrain.episodeRewards;
+                if (graphMode == 1) history = selectedBrain.continuousHistory;
+                else history = selectedBrain.episodeRewards;
             }
             
             if (history == null || history.Count < 2)

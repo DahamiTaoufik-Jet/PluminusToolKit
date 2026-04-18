@@ -12,15 +12,25 @@ namespace Pluminus.Data
     {
         public List<float> episodeRewards = new List<float>();
         public List<float> continuousHistory = new List<float>();
+        public List<float> winRateHistory = new List<float>(); // Nouveau : Evolution du Winrate (%)
         
         public int totalEpisodes = 0;
+        public int totalSuccesses = 0;
         public float bestEpisodeReward = float.MinValue;
+
+        [Header("Global Item Stats")]
+        public int totalGoldCollected = 0;
+        public int totalGoldMissed = 0;
 
         public void Clear()
         {
             episodeRewards.Clear();
             continuousHistory.Clear();
+            winRateHistory.Clear();
             totalEpisodes = 0;
+            totalSuccesses = 0;
+            totalGoldCollected = 0;
+            totalGoldMissed = 0;
             bestEpisodeReward = float.MinValue;
         }
 

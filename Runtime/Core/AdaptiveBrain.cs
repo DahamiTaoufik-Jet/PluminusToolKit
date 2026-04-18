@@ -56,10 +56,16 @@ namespace Pluminus.Core
         public Pluminus.Data.PluminusAnalyticsData analyticsData;
         public List<float> episodeRewards = new List<float>(); // Historique des scores par épisodes
         public List<float> continuousHistory = new List<float>(); // Historique continu (temps réel)
+        
         private float currentEpisodeTotalReward = 0f;
         private float sessionTotalReward = 0f;
         private int totalEpisodes = 0;
         private float statsTimer = 0f;
+
+        // Nouvelles metrics demandées
+        private int successCount = 0;
+        private int goldCollected = 0;
+        private int goldMissed = 0;
 
         private void Awake()
         {
@@ -196,9 +202,30 @@ namespace Pluminus.Core
         /// </summary>
         public void EndEpisode()
         {
+            bool wasSuccess = currentEpisodeTotalReward > 0;
+            if (wasSuccess) successCount++;
+
             episodeRewards.Add(currentEpisodeTotalReward);
-            if (episodeRewards.Count > 100) episodeRewards.RemoveAt(0); // Garde les 100 derniers
+            if (episodeRewards.Count > 100) episodeRewards.RemoveAt(0);
             
+            // Calcul du Winrate sur les derniers épisodes
+            float currentWinRate = (float)successCount / (totalEpisodes + 1) * 100f;
+
+            // Persistance via l'asset
+            if (analyticsData != null) 
+            {
+                analyticsData.AddEpisode(currentEpisodeTotalReward);
+                if (wasSuccess) analyticsData.totalSuccesses++;
+                
+                // Track winrate curve
+                analyticsData.winRateHistory.Add(currentWinRate);
+                if (analyticsData.winRateHistory.Count > 100) analyticsData.winRateHistory.RemoveAt(0);
+
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.SetDirty(analyticsData);
+#endif
+            }
+
             totalEpisodes++;
             currentEpisodeTotalReward = 0;
             
@@ -213,6 +240,13 @@ namespace Pluminus.Core
         /// <param name="flag">Le nom textuel de l'événement (ex: "TookDamage")</param>
         public void ApplyRewardFlag(string flag)
         {
+            // Stats spécifiques pour Gold Accuracy (Si les IDs contiennent "Gold")
+            if (flag.ToLower().Contains("gold"))
+            {
+                if (flag.ToLower().Contains("collect")) { goldCollected++; if (analyticsData) analyticsData.totalGoldCollected++; }
+                else if (flag.ToLower().Contains("miss")) { goldMissed++; if (analyticsData) analyticsData.totalGoldMissed++; }
+            }
+
             // Cherche la valeur en points liée à ce mot clé dans le RewardProfile
             if (rewardProfile != null && rewardProfile.TryGetReward(flag, out RewardEvent reward))
             {

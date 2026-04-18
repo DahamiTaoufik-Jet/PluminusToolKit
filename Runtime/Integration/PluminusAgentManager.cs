@@ -18,8 +18,10 @@ namespace Pluminus.Integration
         [Header("Rythme de Décision")]
         [Tooltip("Si coché, l'IA décide automatiquement à intervalle régulier.")]
         public bool autoTick = true;
-        [Tooltip("Temps en secondes entre chaque décision de l'IA.")]
+        [Tooltip("Temps de base entre chaque décision (à x1).")]
         public float decisionRate = 0.1f;
+        [Tooltip("Si coché, l'IA décidera plus souvent quand le jeu est accéléré pour éviter de rater des obstacles.")]
+        public bool dynamicDecisionRate = true;
         private float timer;
 
         [Header("Accélérateur de Temps")]
@@ -50,8 +52,13 @@ namespace Pluminus.Integration
 
             if (autoTick && brain != null && !brain.useHeuristic)
             {
-                timer += Time.deltaTime;
-                if (timer >= decisionRate)
+                // On calcule le seuil : si dynamique, on divise par la vitesse pour garder la même précision temporelle
+                float currentDecisionRate = dynamicDecisionRate ? (decisionRate / Mathf.Max(1f, trainingSpeed)) : decisionRate;
+                
+                // On utilise unscaledDeltaTime pour un contrôle précis du rythme par rapport à la vitesse réelle
+                timer += Time.unscaledDeltaTime;
+
+                if (timer >= currentDecisionRate)
                 {
                     brain.TickDecision();
                     timer = 0;

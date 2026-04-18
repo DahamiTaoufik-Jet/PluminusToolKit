@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using Pluminus.Core;
 
-namespace Pluminus.Editor
+namespace Pluminus.EditorTools
 {
     public class PluminusPerformanceDashboard : EditorWindow
     {

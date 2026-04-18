@@ -9,7 +9,7 @@ namespace Pluminus.EditorTools
     /// Il ajoute des graphiques et des visualisations en temps réel pour analyser le comportement de l'IA pendant le Play Mode.
     /// </summary>
     [CustomEditor(typeof(AdaptiveBrain))]
-    public class AdaptiveBrainEditor : Editor
+    public class AdaptiveBrainEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

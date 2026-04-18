@@ -4,43 +4,32 @@ namespace Pluminus.Sensors.Extended
 {
     /// <summary>
     /// Capteur d'État d'Action.
-    /// Traduit la phase actuelle d'une action complexe (ex: Préparation, Frappe, Récupération).
+    /// Sert de 'pont' pour que l'IA connaisse sa phase actuelle (ex: Attaque, Idle, Stun).
     /// </summary>
     [AddComponentMenu("Pluminus/Sensors/Action State Sensor")]
     public class ActionStateSensor : PluminusStateSensor
     {
-        [Header("Configuration de l'Action")]
-        [Tooltip("Nombre total de phases/états possibles pour ce capteur. (Ex: 3 = Repos, Attaque, Esquive)")]
-        [Min(1)]
-        public int numberOfStates = 3;
+        [TextArea(3, 5)]
+        public string Note = "INFO: Ce capteur permet à l'IA de savoir ce qu'elle fait déjà (ex: État 1 = Attaque en cours). Appelez 'SetActionState(id)' depuis vos scripts ou Animation Events.";
+
+        [Header("Configuration")]
+        [Min(1)] public int numberOfStates = 3;
 
         private int currentState = 0;
 
-        public override int GetSubStateCount()
-        {
-            return numberOfStates;
-        }
+        public override int GetSubStateCount() => numberOfStates;
+        public override int GetCurrentSubState() => Mathf.Clamp(currentState, 0, numberOfStates - 1);
 
-        public override int GetCurrentSubState()
-        {
-            // Sécurité pour éviter un out of bounds
-            return Mathf.Clamp(currentState, 0, numberOfStates - 1);
-        }
-
-        /// <summary>
-        /// Méthode à appeler depuis vos propres scripts ou via des Animation Events pour informer l'IA de l'état actuel.
-        /// </summary>
-        /// <param name="newStateId">L'ID de l'état (entre 0 et numberOfStates - 1)</param>
         public void SetActionState(int newStateId)
         {
-            if (newStateId >= 0 && newStateId < numberOfStates)
-            {
-                currentState = newStateId;
-            }
-            else
-            {
-                Debug.LogWarning($"[ActionStateSensor] Tentative d'assigner l'état invalide {newStateId}. Max: {numberOfStates - 1}");
-            }
+            currentState = newStateId;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+#if UNITY_EDITOR
+            UnityEditor.Handles.Label(transform.position + Vector3.up * 2.5f, $"Phase Action : {GetCurrentSubState()}", new GUIStyle { normal = { textColor = Color.white }, alignment = TextAnchor.MiddleCenter });
+#endif
         }
     }
 }

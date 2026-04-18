@@ -3,69 +3,86 @@ using UnityEngine;
 namespace Pluminus.Sensors.Extended
 {
     /// <summary>
-    /// Capteur Matriciel Linéaire (Version Légère du Grid Sensor).
-    /// Teste 3 cases (Gauche, Centre, Droite) devant l'agent.
-    /// L'utilisation d'une vraie grille 3x3 génère 512 états, ce qui sature trop la Q-Table en No-Code conventionnel.
+    /// Capteur avec une Grille 3x3 (ou personnalisée).
+    /// Permet de détecter les obstacles tout autour de l'agent.
     /// </summary>
-    [AddComponentMenu("Pluminus/Sensors/Grid Sensor (Linear)")]
+    [AddComponentMenu("Pluminus/Sensors/Grid Sensor (3x3)")]
     public class GridSensor : PluminusStateSensor
     {
-        [Header("Grille Frontale (3 cases)")]
-        [Tooltip("Distance où la détection aura lieu (devant le Transform).")]
-        public float forwardOffset = 1.5f;
-        
-        [Tooltip("Largeur de chaque case (distance entre la gauche, le centre et la droite).")]
-        public float spacing = 1.0f;
-        
-        [Tooltip("Rayon de chaque test.")]
+        [Header("Dimensions de la Grille")]
+        public float gridSize = 3f;
         public float cellRadius = 0.4f;
+        public float verticalOffset = 0.5f;
 
-        [Tooltip("Masque des éléments considérés comme 'Occupant' la coordonnée.")]
+        [Header("Masque de Collision")]
         public LayerMask obstacleMask;
+
+        [Header("Toggles de Cellules (Optimisation)")]
+        [Tooltip("Désactivez les cases inutiles pour réduire le nombre d'États de l'IA.")]
+        public bool[] activeCells = new bool[9] { 
+            true, true, true, 
+            true, false, true, 
+            true, true, true 
+        };
 
         public override int GetSubStateCount()
         {
-            // 3 cellules booléennes = 2^3 = 8 états (de 0 à 7)
-            return 8;
+            // Le nombre d'états est 2 puissance (nombre de cases actives)
+            int activeCount = 0;
+            foreach (bool b in activeCells) if (b) activeCount++;
+            return (int)Mathf.Pow(2, activeCount);
         }
 
         public override int GetCurrentSubState()
         {
             int state = 0;
-            Vector3 centerPos = transform.position + transform.forward * forwardOffset;
+            int bitIndex = 0;
 
-            // Construit un ID binaire : b010 par exemple
-            // Cellule Gauche (Bit 0)
-            if (CheckCell(centerPos - transform.right * spacing)) state |= (1 << 0);
-            
-            // Cellule Centre (Bit 1)
-            if (CheckCell(centerPos)) state |= (1 << 1);
-            
-            // Cellule Droite (Bit 2)
-            if (CheckCell(centerPos + transform.right * spacing)) state |= (1 << 2);
+            for (int y = -1; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    int cellIndex = (y + 1) * 3 + (x + 1);
+                    if (activeCells[cellIndex])
+                    {
+                        Vector3 offset = (transform.right * x * (gridSize / 2f)) + (transform.forward * y * (gridSize / 2f));
+                        Vector3 checkPos = transform.position + offset + Vector3.up * verticalOffset;
 
+                        if (Physics.CheckSphere(checkPos, cellRadius, obstacleMask))
+                        {
+                            state |= (1 << bitIndex);
+                        }
+                        bitIndex++;
+                    }
+                }
+            }
             return state;
-        }
-
-        private bool CheckCell(Vector3 worldPos)
-        {
-            return Physics.CheckSphere(worldPos, cellRadius, obstacleMask);
         }
 
         private void OnDrawGizmosSelected()
         {
-            Vector3 centerPos = transform.position + transform.forward * forwardOffset;
-            
-            DrawCellGizmo(centerPos - transform.right * spacing);
-            DrawCellGizmo(centerPos);
-            DrawCellGizmo(centerPos + transform.right * spacing);
-        }
+            for (int y = -1; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    int cellIndex = (y + 1) * 3 + (x + 1);
+                    Vector3 offset = (transform.right * x * (gridSize / 2f)) + (transform.forward * y * (gridSize / 2f));
+                    Vector3 checkPos = transform.position + offset + Vector3.up * verticalOffset;
 
-        private void DrawCellGizmo(Vector3 pos)
-        {
-            bool isOccupied = Physics.CheckSphere(pos, cellRadius, obstacleMask);
-            Gizmos.color = isOccupied ? new Color(1, 0, 0, 0.5f) : new Color(0, 1, 0, 0.2f);
-            Gizmos.DrawSphere(pos, cellRadius);
+                    if (activeCells[cellIndex])
+                    {
+                        bool isOccupied = Application.isPlaying && Physics.CheckSphere(checkPos, cellRadius, obstacleMask);
+                        Gizmos.color = isOccupied ? new Color(1, 0, 0, 0.6f) : new Color(0, 1, 0, 0.3f);
+                        Gizmos.DrawSphere(checkPos, cellRadius);
+                        Gizmos.DrawWireSphere(checkPos, cellRadius);
+                    }
+                    else
+                    {
+                        Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.1f);
+                        Gizmos.DrawWireSphere(checkPos, cellRadius * 0.5f);
+                    }
+                }
+            }
         }
     }
 }

@@ -1,46 +1,99 @@
 using UnityEngine;
+using System.Reflection;
 
 namespace Pluminus.Sensors.Extended
 {
     /// <summary>
-    /// Capteur de Valeur Continue (Discrétisation de variables).
-    /// Utile pour transformer des HP ou de la Mana en "Critique", "Moyen", "Plein".
+    /// Capteur de Valeur Automatique.
+    /// Scanne un composant cible et lit une variable (float/int) pour calculer l'état.
     /// </summary>
-    [AddComponentMenu("Pluminus/Sensors/Value Sensor")]
+    [AddComponentMenu("Pluminus/Sensors/Value Sensor (Auto)")]
     public class ValueSensor : PluminusStateSensor
     {
-        [Header("Paliers de Valeurs")]
-        [Tooltip("Si la valeur est en dessous de ce ratio (0.0 à 1.0), on considère que c'est l'État Critique (0)")]
-        [Range(0f, 1f)]
-        public float criticalThreshold = 0.3f;
+        [Header("Source de Données")]
+        [Tooltip("Le composant qui contient la valeur (ex: PlayerStats, Health, etc.)")]
+        public Component targetComponent;
         
-        [Tooltip("Si la valeur est au dessus de critique, mais en dessous de celui-là, on est à l'État Moyen (1). Au-dessus c'est l'État Plein (2).")]
-        [Range(0f, 1f)]
-        public float highThreshold = 0.7f;
+        [Tooltip("Le nom exact de la variable ou propriété à scanner (ex: currentHealth)")]
+        public string fieldName = "health";
 
-        // La valeur courante normalisée de 0 à 1.
+        [Tooltip("Le nom de la variable Max (optionnel) pour calculer le ratio. Si vide, utilise 100.")]
+        public string maxFieldName = "maxHealth";
+
+        [Header("Paliers de Valeurs")]
+        [Range(0f, 1f)] public float criticalThreshold = 0.3f;
+        [Range(0f, 1f)] public float highThreshold = 0.7f;
+
+        private FieldInfo valueField;
+        private PropertyInfo valueProperty;
+        private FieldInfo maxField;
+        private PropertyInfo maxProperty;
+
         private float currentRatio = 1f;
 
-        public override int GetSubStateCount()
+        public override int GetSubStateCount() => 3;
+
+        protected override void Awake()
         {
-            // 3 états : Critique, Moyen, Plein
-            return 3;
+            base.Awake();
+            InitializeReflection();
+        }
+
+        private void InitializeReflection()
+        {
+            if (targetComponent == null) return;
+
+            var type = targetComponent.GetType();
+            
+            // Cherche le champ ou la propriété pour la valeur actuelle
+            valueField = type.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (valueField == null) valueProperty = type.GetProperty(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // Cherche le champ ou la propriété pour la valeur max
+            if (!string.IsNullOrEmpty(maxFieldName))
+            {
+                maxField = type.GetField(maxFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (maxField == null) maxProperty = type.GetProperty(maxFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            }
         }
 
         public override int GetCurrentSubState()
         {
-            if (currentRatio < criticalThreshold) return 0; // Critique (ex: HP bas)
-            if (currentRatio < highThreshold) return 1;     // Moyen (ex: HP moyens)
-            return 2;                                       // Plein/OK (ex: Full HP)
+            UpdateValueFromReflection();
+
+            if (currentRatio < criticalThreshold) return 0; // Critique
+            if (currentRatio < highThreshold) return 1;     // Moyen
+            return 2;                                       // Plein
         }
 
-        /// <summary>
-        /// Doit être appelé par le composant de vie/statistiques de votre jeu à chaque fois qu'il prend des dégâts/se soigne.
-        /// </summary>
-        /// <param name="ratio">Le ratio entre 0 (vide) et 1 (plein) de la ressource mesurée.</param>
-        public void UpdateValueRatio(float ratio)
+        private void UpdateValueFromReflection()
         {
-            currentRatio = Mathf.Clamp01(ratio);
+            if (targetComponent == null) return;
+
+            float val = 0;
+            float max = 100;
+
+            // Lecture de la valeur actuelle
+            if (valueField != null) val = System.Convert.ToSingle(valueField.GetValue(targetComponent));
+            else if (valueProperty != null) val = System.Convert.ToSingle(valueProperty.GetValue(targetComponent));
+
+            // Lecture de la valeur max
+            if (maxField != null) max = System.Convert.ToSingle(maxField.GetValue(targetComponent));
+            else if (maxProperty != null) max = System.Convert.ToSingle(maxProperty.GetValue(targetComponent));
+
+            currentRatio = Mathf.Clamp01(val / max);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (targetComponent != null)
+            {
+#if UNITY_EDITOR
+                UpdateValueFromReflection();
+                Color c = currentRatio < criticalThreshold ? Color.red : (currentRatio < highThreshold ? Color.yellow : Color.green);
+                UnityEditor.Handles.Label(transform.position + Vector3.up * 2f, $"Valeur : {(currentRatio * 100):F0}%", new GUIStyle { normal = { textColor = c }, fontStyle = FontStyle.Bold });
+#endif
+            }
         }
     }
 }

@@ -10,9 +10,10 @@ namespace Pluminus.Integration.Input
     public interface IPluminusInput
     {
         /// <summary>
-        /// Retourne le vecteur de mouvement de direction (-1 à 1 sur X et Y, comme Input.GetAxisRaw).
+        /// Retourne le vecteur de mouvement de direction (Vector3).
+        /// S'adapte automatiquement à la vue 2D ou 3D selon la configuration du manager abstrait.
         /// </summary>
-        Vector2 GetAxis();
+        Vector3 GetAxis();
 
         /// <summary>
         /// Retourne Vrai si le bouton demandé est maintenu/actif sur ce tick. (ex: 'Jump', 'Fire')

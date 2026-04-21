@@ -44,18 +44,30 @@ namespace Pluminus.Integration.Input
         }
     }
 
+    public enum TargetSpace
+    {
+        [Tooltip("Mode 2D ou UI (X et Y sont utilisés)")]
+        Space2D_XY,
+        [Tooltip("Mode 3D (X et Z sont utilisés sur le sol)")]
+        Space3D_XZ
+    }
+
     /// <summary>
     /// Remplace le PluminusActionRouter pour les jeux de mouvement continus (Top-Down, Platformer, FPS).
-    /// Fournit un joystick IA qui convertit les choix du cerveau en directions lisibles (Vector2) via IPluminusInput.
+    /// Fournit un joystick IA qui convertit les choix du cerveau en directions lisibles (Vector2 ou Vector3) via IPluminusInput.
     /// </summary>
     [AddComponentMenu("Pluminus/Integration/Input/Pluminus Joystick AI")]
     public class PluminusJoystickAI : MonoBehaviour, IActionExecutor, IPluminusInput
     {
+        [Header("Espace de Jeu")]
+        [Tooltip("Ajuste comment le Joystick projette l'axe Haut/Bas vers votre jeu.")]
+        public TargetSpace targetSpace = TargetSpace.Space3D_XZ;
+
         [Header("Configuration Directionnelle de l'IA")]
         [Tooltip("Configure ici ce que l'IA simule comme poussée de joystick à chaque ActionID choisi (Action 0 = Element 0).")]
         public List<PluminusJoystickMapping> actionMappings = new List<PluminusJoystickMapping>();
 
-        // L'état actuel du joystick simulé par l'IA
+        // L'état actuel du joystick simulé par l'IA (en interne toujours XY)
         private Vector2 currentAxis = Vector2.zero;
         private List<string> currentButtons = new List<string>();
 
@@ -91,9 +103,17 @@ namespace Pluminus.Integration.Input
         // C'est appelé par le script 'PlayerController' ou 'Movement' du développeur
         // =======================================================================
         
-        public Vector2 GetAxis()
+        public Vector3 GetAxis()
         {
-            return currentAxis;
+            if (targetSpace == TargetSpace.Space3D_XZ)
+            {
+                return new Vector3(currentAxis.x, 0f, currentAxis.y);
+            }
+            else
+            {
+                // Space2D_XY
+                return new Vector3(currentAxis.x, currentAxis.y, 0f);
+            }
         }
 
         public bool GetButton(string actionName)

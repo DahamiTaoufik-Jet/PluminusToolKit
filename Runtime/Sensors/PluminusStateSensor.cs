@@ -1,4 +1,5 @@
 using UnityEngine;
+using Pluminus.Core;
 
 namespace Pluminus.Sensors
 {

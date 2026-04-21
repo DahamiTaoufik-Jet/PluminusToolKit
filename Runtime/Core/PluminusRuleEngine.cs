@@ -20,20 +20,23 @@ namespace Pluminus.Core
     }
 
     /// <summary>
-    /// Moteur de Règles (No-Code). S'attache sur le GameObject de l'IA (là où se trouve AdaptiveBrain).
+    /// Moteur de Règles (No-Code). S'attache sur le GameObject de l'IA (là où se trouve PluminusBrain).
     /// Gère la distribution de récompenses (ex: JumpTiredness) selon l'environnement de façon 100% visuelle.
     /// </summary>
-    [RequireComponent(typeof(AdaptiveBrain))]
+    [RequireComponent(typeof(PluminusBrain))]
     public class PluminusRuleEngine : MonoBehaviour
     {
         [Header("Configuration des Règles No-Code")]
         public List<ActionRewardRule> rules = new List<ActionRewardRule>();
         
-        private AdaptiveBrain brain;
+        [Tooltip("La priorité globale : Si l'IA voit une règle valide, elle ignore son cerveau temporairement.")]
+        public float ruleWeight = 1.0f;
+
+        private PluminusBrain brain;
 
         private void Awake()
         {
-            brain = GetComponent<AdaptiveBrain>();
+            brain = GetComponent<PluminusBrain>();
             if (brain != null && brain.OnActionExecuted != null)
             {
                 // On se branche pour écouter l'IA de l'extérieur du code !

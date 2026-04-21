@@ -7,10 +7,10 @@ namespace Pluminus.Examples
     /// <summary>
     /// L'IA ennemie qui doit apprendre à parer l'épée et esquiver le projectile venant du SimplePlayer.
     /// </summary>
-    [RequireComponent(typeof(AdaptiveBrain))]
+    [RequireComponent(typeof(PluminusBrain))]
     public class SimpleEnemy : MonoBehaviour, IEnvironmentObserver, IActionExecutor
     {
-        private AdaptiveBrain brain;
+        private PluminusBrain brain;
         
         [Tooltip("Glisser/Déposer le joueur de la scène ici.")]
         public SimplePlayer player;

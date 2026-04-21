@@ -7,7 +7,7 @@ namespace Pluminus.EditorTools
 {
     public class PluminusPerformanceDashboard : EditorWindow
     {
-        private AdaptiveBrain selectedBrain;
+        private PluminusBrain selectedBrain;
         private Vector2 scrollPos;
         private int graphMode = 0; // 0: Episodes, 1: Continuous, 2: Winrate
 
@@ -21,7 +21,7 @@ namespace Pluminus.EditorTools
         {
             if (Selection.activeGameObject != null)
             {
-                var brain = Selection.activeGameObject.GetComponentInChildren<AdaptiveBrain>();
+                var brain = Selection.activeGameObject.GetComponentInChildren<PluminusBrain>();
                 if (brain != null)
                 {
                     selectedBrain = brain;
@@ -38,10 +38,10 @@ namespace Pluminus.EditorTools
             // ... (rest of the header logic)
             GUILayout.Label("📊 Pluminus AI Performance", EditorStyles.boldLabel);
             
-            if (selectedBrain == null) selectedBrain = FindObjectOfType<AdaptiveBrain>();
+            if (selectedBrain == null) selectedBrain = FindObjectOfType<PluminusBrain>();
 
             EditorGUI.BeginChangeCheck();
-            selectedBrain = (AdaptiveBrain)EditorGUILayout.ObjectField("Agent Inspecté", selectedBrain, typeof(AdaptiveBrain), true);
+            selectedBrain = (PluminusBrain)EditorGUILayout.ObjectField("Agent Inspecté", selectedBrain, typeof(PluminusBrain), true);
             if (EditorGUI.EndChangeCheck()) Repaint();
 
             EditorGUILayout.EndVertical();

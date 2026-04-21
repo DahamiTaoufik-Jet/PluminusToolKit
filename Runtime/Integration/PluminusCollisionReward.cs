@@ -10,7 +10,7 @@ namespace Pluminus.Integration
     public class PluminusCollisionReward : MonoBehaviour
     {
         [Tooltip("Le cerveau de l'IA qui doit recevoir la récompense (si vide, le script cherchera automatiquement sur lui-même ou ses parents)")]
-        public AdaptiveBrain targetBrain;
+        public PluminusBrain targetBrain;
 
         [Tooltip("Si rempli, la collision ne marchera qu'avec les objets portant ce Tag. Idéal pour repérer le sol 'Ground' !")]
         public string filterTag = "Ground";
@@ -24,7 +24,7 @@ namespace Pluminus.Integration
 
         private void Awake()
         {
-            if (targetBrain == null) targetBrain = GetComponentInParent<AdaptiveBrain>();
+            if (targetBrain == null) targetBrain = GetComponentInParent<PluminusBrain>();
         }
 
         private void OnCollisionEnter2D(Collision2D collision)

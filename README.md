@@ -14,7 +14,7 @@ Le projet est divisé en trois piliers principaux :
 ### 2. Le Moteur Mathématique (Core)
 *   **`QLearningEngine`** : Le cœur algorithmique (C# pur). Il applique l'Équation de Bellman pour mettre à jour les probabilités de réussite d'une action.
 *   **`QTable`** : Le tableau local stockant les scores temporaires.
-*   **`AdaptiveBrain`** (MonoBehaviour) : Le chef d'orchestre. C'est le composant principal à glisser sur vos ennemis. Il relie votre jeu au moteur mathématique.
+*   **`PluminusBrain`** (MonoBehaviour) : Le chef d'orchestre. C'est le composant principal à glisser sur vos ennemis. Il relie votre jeu au moteur mathématique.
 
 ### 3. Les Interfaces Développeur (Integration)
 *   **`IEnvironmentObserver`** : À implémenter sur votre ennemi pour traduire l'environnement 3D/2D (Distance, HP) en un "État" mathématique simple (un entier).

@@ -53,7 +53,7 @@ namespace Pluminus.Examples.Pokemon
 
             // Épluchage de la Q-Table pour faire un rapport détaillé des connaissances acquises
             Debug.Log("\n<color=magenta>--- RAPPORT DES 17 STRATÉGIES FINALES RETENUES PAR L'IA ---</color>");
-            var brain = enemy.GetComponent<Pluminus.Core.AdaptiveBrain>();
+            var brain = enemy.GetComponent<Pluminus.Core.PluminusBrain>();
             var qTable = brain.GetCurrentQTable();
             
             for (int state = 0; state < 17; state++)

@@ -10,7 +10,7 @@ namespace Pluminus.Core
     /// Le composant principal à attacher sur votre ennemi dans Unity.
     /// Il fait le pont entre le moteur mathématique (QLearningEngine), la configuration, et votre jeu.
     /// </summary>
-    public class AdaptiveBrain : MonoBehaviour
+    public class PluminusBrain : MonoBehaviour
     {
         [Header("Configuration")]
         [Tooltip("Le profil hyperparamètres. Plusieurs ennemis peuvent partager le même BrainConfig.")]
@@ -79,7 +79,7 @@ namespace Pluminus.Core
 
             if (environmentObserver == null || actionExecutor == null)
             {
-                Debug.LogError("Erreur: L'AdaptiveBrain n'a pas trouvé d'IEnvironmentObserver (StateBuilder) ou d'IActionExecutor (Gamepad) sur cet objet ou ses enfants !");
+                Debug.LogError("Erreur: Le PluminusBrain n'a pas trouvé d'IEnvironmentObserver (PluminusEyes) ou d'IActionExecutor (Gamepad) sur cet objet ou ses enfants !");
                 enabled = false;
                 return;
             }

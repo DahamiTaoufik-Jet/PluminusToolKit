@@ -4,13 +4,13 @@ namespace Pluminus.Sensors
 {
     /// <summary>
     /// Classe abstraite de base pour tous les capteurs visuels Pluminus (No-Code).
-    /// Ajoutez des classes dérivées sur le même GameObject que le PluminusUnityStateBuilder.
+    /// Ajoutez des classes dérivées sur le même GameObject que le PluminusBrain.
     /// </summary>
     public abstract class PluminusStateSensor : MonoBehaviour
     {
         [Header("Connexion Externe")]
-        [Tooltip("Laissez vide si le capteur est déjà un Enfant de l'IA. Sinon, glissez le Cerveau (PluminusUnityStateBuilder) distant ici !")]
-        public PluminusUnityStateBuilder targetBuilder;
+        [Tooltip("Laissez vide si le capteur est déjà un Enfant de l'IA. Sinon, glissez le Cerveau (PluminusBrain) distant ici !")]
+        public PluminusBrain targetBrain;
 
         [Tooltip("Nom usuel du capteur pour s'y retrouver dans l'éditeur")]
         public string sensorName = "Nouveau Capteur";
@@ -28,9 +28,9 @@ namespace Pluminus.Sensors
         protected virtual void Awake()
         {
             // Autorise le capteur a s'inscrire lui-même à un cerveau distant au lancement !
-            if (targetBuilder != null)
+            if (targetBrain != null)
             {
-                targetBuilder.RegisterExternalSensor(this);
+                targetBrain.RegisterExternalSensor(this);
             }
         }
 
@@ -40,7 +40,7 @@ namespace Pluminus.Sensors
         public abstract int GetCurrentSubState();
 
         /// <summary>
-        /// S'occupe de renvoyer l'état au Builder, tout en loggant automatiquement le changement dans la console si demandé.
+        /// S'occupe de renvoyer l'état au Brain, tout en loggant automatiquement le changement dans la console si demandé.
         /// </summary>
         public int GetStateWithDebug()
         {

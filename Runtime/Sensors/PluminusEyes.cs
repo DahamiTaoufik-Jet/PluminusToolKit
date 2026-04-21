@@ -9,7 +9,8 @@ namespace Pluminus.Sensors
     /// Il lit automatiquement tous les `PluminusStateSensor` attachés à ce GameObject et multiplie leurs états
     /// pour générer dynamiquement l'ID d'État Final (StateId) pour l'AdaptiveBrain.
     /// </summary>
-    public class PluminusUnityStateBuilder : MonoBehaviour, IEnvironmentObserver
+    [AddComponentMenu("Pluminus/Sensors/Pluminus Eyes")]
+    public class PluminusEyes : MonoBehaviour, IEnvironmentObserver
     {
         private List<PluminusStateSensor> loadedSensors = new List<PluminusStateSensor>();
 
@@ -26,7 +27,7 @@ namespace Pluminus.Sensors
             
             if (loadedSensors.Count == 0)
             {
-                Debug.LogWarning("PluminusUnityStateBuilder: Aucun capteur n'est attaché. L'état restera toujours 0.");
+                Debug.LogWarning("PluminusEyes: Aucun capteur n'est attaché. L'état restera toujours 0.");
             }
         }
 

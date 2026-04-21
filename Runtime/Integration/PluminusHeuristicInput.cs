@@ -18,7 +18,7 @@ namespace Pluminus.Integration
     [AddComponentMenu("Pluminus/Integration/Pluminus Heuristic Input")]
     public class PluminusHeuristicInput : MonoBehaviour
     {
-        private AdaptiveBrain brain;
+        private PluminusBrain brain;
 
         [Header("Mapping des Touches")]
         [Tooltip("Définit quelle touche clavier déclenche quel ID d'action.")]
@@ -26,7 +26,7 @@ namespace Pluminus.Integration
 
         private void Awake()
         {
-            brain = GetComponent<AdaptiveBrain>();
+            brain = GetComponent<PluminusBrain>();
         }
 
         private void Update()

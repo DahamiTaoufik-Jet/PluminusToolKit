@@ -8,16 +8,16 @@ namespace Pluminus.EditorTools
     /// Éditeur visuel personnalisé (Custom Editor) pour l'inspecteur d'AdaptiveBrain.
     /// Il ajoute des graphiques et des visualisations en temps réel pour analyser le comportement de l'IA pendant le Play Mode.
     /// </summary>
-    [CustomEditor(typeof(AdaptiveBrain))]
-    public class AdaptiveBrainEditor : UnityEditor.Editor
+    [CustomEditor(typeof(PluminusBrain))]
+    public class PluminusBrainEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             // 1. Dessine l'interface par défaut habituelle (pour paramétrer le BrainConfig et RewardProfile)
             DrawDefaultInspector();
 
-            // Récupère le script AdaptiveBrain attaché à l'objet surveillé
-            AdaptiveBrain brain = (AdaptiveBrain)target;
+            // Récupère le script PluminusBrain attaché à l'objet surveillé
+            PluminusBrain brain = (PluminusBrain)target;
 
             EditorGUILayout.Space(15);
             EditorGUILayout.LabelField("Monitor Temps Réel (Pluminus Debug)", EditorStyles.boldLabel);

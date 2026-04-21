@@ -1,14 +1,15 @@
 using UnityEngine;
 using System.Collections;
 using Pluminus.Core;
+using Pluminus.Integration;
 
 namespace Pluminus.Examples.MarioAndLuigi
 {
-    [RequireComponent(typeof(AdaptiveBrain))]
+    [RequireComponent(typeof(PluminusBrain))]
     [RequireComponent(typeof(Rigidbody2D))]
-    public class MLEnemy : MonoBehaviour, Pluminus.Integration.IActionExecutor
+    public class MLEnemy : MonoBehaviour, IEnvironmentObserver, IActionExecutor
     {
-        private AdaptiveBrain brain;
+        private PluminusBrain brain;
         private Rigidbody2D rb;
 
         [Header("Configuration Saut")]
@@ -22,7 +23,7 @@ namespace Pluminus.Examples.MarioAndLuigi
 
         private void Awake()
         {
-            brain = GetComponent<AdaptiveBrain>();
+            brain = GetComponent<PluminusBrain>();
             rb = GetComponent<Rigidbody2D>();
         }
 
@@ -38,7 +39,7 @@ namespace Pluminus.Examples.MarioAndLuigi
 
         IEnumerator BrainTickRoutine()
         {
-            // L'AdaptiveBrain trouvera tout seul le PluminusUnityStateBuilder attaché pour les observations
+            // Le PluminusBrain trouvera tout seul le PluminusEyes attaché pour les observations
             while (true)
             {
                 // FIX MAJEUR D'APPRENTISSAGE : On fige le cerveau de l'IA quand elle est en l'air.

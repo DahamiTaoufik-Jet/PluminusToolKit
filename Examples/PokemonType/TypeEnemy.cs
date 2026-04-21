@@ -4,10 +4,10 @@ using Pluminus.Integration;
 
 namespace Pluminus.Examples.Pokemon
 {
-    [RequireComponent(typeof(AdaptiveBrain))]
+    [RequireComponent(typeof(PluminusBrain))]
     public class TypeEnemy : MonoBehaviour, IEnvironmentObserver, IActionExecutor
     {
-        private AdaptiveBrain brain;
+        private PluminusBrain brain;
         public TypePlayer player;
 
         public bool enableLogs = true;
@@ -18,7 +18,7 @@ namespace Pluminus.Examples.Pokemon
         
         private void Awake()
         {
-            brain = GetComponent<AdaptiveBrain>();
+            brain = GetComponent<PluminusBrain>();
             PokemonTypeChart.InitializeMapping();
         }
 

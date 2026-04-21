@@ -10,10 +10,10 @@ namespace Pluminus.Examples
     /// Ce Slime virtuel combat un joueur imaginaire.
     /// Il possède un brain et doit apprendre quand Attaquer(0), Bloquer(1) ou Fuir(2).
     /// </summary>
-    [RequireComponent(typeof(AdaptiveBrain))]
+    [RequireComponent(typeof(PluminusBrain))]
     public class DummySlimeEnemy : MonoBehaviour, IEnvironmentObserver, IActionExecutor
     {
-        private AdaptiveBrain brain;
+        private PluminusBrain brain;
 
         // --- Données simulées du jeu ---
         [Header("Simulation de Jeu (Test)")]

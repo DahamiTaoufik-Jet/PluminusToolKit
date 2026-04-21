@@ -5,12 +5,12 @@ using Pluminus.Sensors;
 
 namespace Pluminus.Sensors.Editor
 {
-    [CustomEditor(typeof(PluminusUnityStateBuilder))]
-    public class PluminusUnityStateBuilderEditor : UnityEditor.Editor
+    [CustomEditor(typeof(PluminusEyes))]
+    public class PluminusEyesEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            PluminusUnityStateBuilder builder = (PluminusUnityStateBuilder)target;
+            PluminusEyes builder = (PluminusEyes)target;
 
             EditorGUILayout.Space(10);
             GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 14 };

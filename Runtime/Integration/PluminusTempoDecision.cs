@@ -9,11 +9,11 @@ namespace Pluminus.Integration
     /// Ce script sert de 'colle' entre votre personnage et Pluminus sans que vous ayez à coder.
     /// Il gère le rythme de décision (Tick) et la réinitialisation (Soft Reset).
     /// </summary>
-    [AddComponentMenu("Pluminus/Integration/Pluminus Agent Manager")]
-    public class PluminusAgentManager : MonoBehaviour
+    [AddComponentMenu("Pluminus/Integration/Pluminus Tempo Decision")]
+    public class PluminusTempoDecision : MonoBehaviour
     {
         [Header("Cible")]
-        public AdaptiveBrain brain;
+        public PluminusBrain brain;
 
         [Header("Rythme de Décision")]
         [Tooltip("Si coché, l'IA décide automatiquement à intervalle régulier.")]
@@ -42,7 +42,7 @@ namespace Pluminus.Integration
 
         private void Awake()
         {
-            if (brain == null) brain = GetComponent<AdaptiveBrain>();
+            if (brain == null) brain = GetComponent<PluminusBrain>();
             
             spawnPosition = (startPoint != null) ? startPoint.position : transform.position;
             spawnRotation = (startPoint != null) ? startPoint.rotation : transform.rotation;

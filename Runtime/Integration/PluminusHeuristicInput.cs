@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Pluminus.Core;
-
+using Input = UnityEngine.Input;
 namespace Pluminus.Integration
 {
     [System.Serializable]

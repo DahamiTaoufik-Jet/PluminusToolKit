@@ -10,8 +10,8 @@ namespace Pluminus.Sensors
     public abstract class PluminusStateSensor : MonoBehaviour
     {
         [Header("Connexion Externe")]
-        [Tooltip("Laissez vide si le capteur est déjà un Enfant de l'IA. Sinon, glissez le Cerveau (PluminusBrain) distant ici !")]
-        public PluminusBrain targetBrain;
+        [Tooltip("Laissez vide si le capteur est déjà un Enfant de l'IA. Sinon, glissez les Yeux (PluminusEyes) distants ici !")]
+        public PluminusEyes targetEyes;
 
         [Tooltip("Nom usuel du capteur pour s'y retrouver dans l'éditeur")]
         public string sensorName = "Nouveau Capteur";
@@ -28,10 +28,10 @@ namespace Pluminus.Sensors
 
         protected virtual void Awake()
         {
-            // Autorise le capteur a s'inscrire lui-même à un cerveau distant au lancement !
-            if (targetBrain != null)
+            // Autorise le capteur a s'inscrire lui-même à des yeux distants au lancement !
+            if (targetEyes != null)
             {
-                targetBrain.RegisterExternalSensor(this);
+                targetEyes.RegisterExternalSensor(this);
             }
         }
 

@@ -37,7 +37,7 @@ namespace Pluminus.Integration
             // Pour l'instant on cherche si une touche est pressée
             foreach (var mapping in mappings)
             {
-                if (Input.GetKey(mapping.key))
+                if (UnityEngine.Input.GetKey(mapping.key))
                 {
                     brain.SetHeuristicAction(mapping.actionId);
                     return; 

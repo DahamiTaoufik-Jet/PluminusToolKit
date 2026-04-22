@@ -33,8 +33,20 @@ namespace Pluminus.Integration.Input
 
         private void OnEnable()
         {
-            // Capture le clavier existant. Keyboard.current est garanti d'être le bon ici.
+            // Capture le clavier existant.
             targetKeyboard = Keyboard.current;
+            
+            // ROOT CAUSE FIX : Quand l'utilisateur clique dans l'Inspector ou le Dashboard,
+            // Unity fait un "soft reset" et relâche TOUTES les touches de TOUS les claviers.
+            // Cette ligne dit à Unity : "Ignore les changements de focus, ne touche pas aux inputs."
+            // C'est indispensable pour l'entraînement IA en arrière-plan !
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            
+#if UNITY_EDITOR
+            // En mode Éditeur, configure aussi le comportement pour que le clavier
+            // reste actif même quand la Game View n'a pas le focus.
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDevicesRespectGameViewFocus;
+#endif
         }
 
         private void OnDisable()

@@ -8,7 +8,14 @@ namespace Pluminus.Integration
     public class VirtualButton
     {
         public string buttonName = "Bouton";
+        [Tooltip("S'active en boucle tant que l'IA maintient ce bouton enfoncé")]
         public UnityEvent onAction;
+
+        [Tooltip("S'active 1 seule fois au moment où l'IA appuie sur ce bouton")]
+        public UnityEvent onPressed;
+
+        [Tooltip("S'active 1 seule fois au moment où l'IA relâche ce bouton")]
+        public UnityEvent onReleased;
     }
 
     /// <summary>
@@ -23,17 +30,39 @@ namespace Pluminus.Integration
         [Tooltip("Chaque bouton ici est lié à un bit. Bouton 1 = Bit 0 (valeur 1), Bouton 2 = Bit 1 (valeur 2)...")]
         public List<VirtualButton> buttons = new List<VirtualButton>();
 
+        private int lastActionId = 0; // Mémoire de la frame précédente pour détecter Pression/Relâchement
+
         public void ExecuteAction(int actionId)
         {
             // Parcourt chaque bouton et vérifie si son bit est actif dans l'actionId
             for (int i = 0; i < buttons.Count; i++)
             {
                 int bitValue = (1 << i);
-                if ((actionId & bitValue) != 0)
+                bool isPressedNow = (actionId & bitValue) != 0;
+                bool wasPressedBefore = (lastActionId & bitValue) != 0;
+
+                if (isPressedNow)
                 {
-                    buttons[i].onAction.Invoke();
+                    // Action continue
+                    buttons[i].onAction?.Invoke();
+
+                    // Vient juste d'être appuyé
+                    if (!wasPressedBefore)
+                    {
+                        buttons[i].onPressed?.Invoke();
+                    }
+                }
+                else
+                {
+                    // Vient juste d'être relâché
+                    if (wasPressedBefore)
+                    {
+                        buttons[i].onReleased?.Invoke();
+                    }
                 }
             }
+
+            lastActionId = actionId;
         }
 
         public int GetMaxActions()
@@ -49,3 +78,4 @@ namespace Pluminus.Integration
         }
     }
 }
+

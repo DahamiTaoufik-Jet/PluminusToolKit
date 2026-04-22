@@ -1,7 +1,9 @@
 {
     "name": "Pluminus.Runtime",
     "rootNamespace": "Pluminus",
-    "references": [],
+    "references": [
+        "Unity.InputSystem"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

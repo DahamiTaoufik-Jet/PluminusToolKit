@@ -3,34 +3,56 @@ using UnityEngine;
 namespace Pluminus.Sensors
 {
     /// <summary>
-    /// Capteur No-Code 3D qui vérifie si un objet avec un tag spécifique est actuellement dans une zone Trigger 3D.
-    /// Renvoie 1 si vrai, 0 si faux.
-    /// Nécessite un Collider (3D) en mode "Is Trigger" sur ce GameObject.
+    /// Capteur No-Code 3D Auto-Configuré.
+    /// Gère son propre BoxCollider pour détecter les objets par Tag.
     /// </summary>
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(BoxCollider))]
     [AddComponentMenu("Pluminus/Sensors/Trigger Tag Sensor 3D")]
     public class TriggerTagSensor3D : PluminusStateSensor
     {
-        [Tooltip("Le Tag de l'objet à détecter dans la zone visuelle (ex: Bullet)")]
-        public string targetTag = "Enemy";
+        [Header("Détection")]
+        [Tooltip("Le Tag de l'objet à détecter (ex: Bullet)")]
+        public string targetTag = "Bullet";
 
+        [Header("Configuration de la Zone")]
+        [Tooltip("La taille de la zone de détection.")]
+        public Vector3 zoneSize = new Vector3(1f, 1f, 1f);
+        
+        [Tooltip("Le décalage du centre de la zone.")]
+        public Vector3 zoneCenter = Vector3.zero;
+
+        private BoxCollider _internalCollider;
         private bool isCurrentlyInside = false;
         private bool pulseMemory = false;
 
-        public override int GetSubStateCount()
+        private void Reset()
         {
-            return 2; // Booléen : 0 = Vide, 1 = Occupé
+            SetupCollider();
         }
+
+        private void OnValidate()
+        {
+            SetupCollider();
+        }
+
+        private void SetupCollider()
+        {
+            if (_internalCollider == null) _internalCollider = GetComponent<BoxCollider>();
+            
+            if (_internalCollider != null)
+            {
+                _internalCollider.isTrigger = true;
+                _internalCollider.size = zoneSize;
+                _internalCollider.center = zoneCenter;
+            }
+        }
+
+        public override int GetSubStateCount() => 2;
 
         public override int GetCurrentSubState()
         {
-            // L'IA observe l'état à chaque tick de décision.
-            // On renvoie VRAI si l'objet est dedans actuellement OU s'il est passé très vite (pulse).
             bool finalState = isCurrentlyInside || pulseMemory;
-            
-            // On efface la mémoire de l'éclair après l'observation pour le prochain tick
             pulseMemory = false;
-            
             return finalState ? 1 : 0;
         }
 

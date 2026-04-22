@@ -41,23 +41,42 @@ namespace Pluminus.Sensors
         }
 
         /// <summary>
-        /// Cherche la cible par Tag si aucune n'est assignée manuellement.
-        /// Appelé au démarrage et à chaque lecture si la cible a été détruite.
+        /// Trouve l'objet LE PLUS PROCHE parmi tous ceux avec le tag cible.
         /// </summary>
-        private void FindTargetIfNeeded()
+        private Transform FindClosestWithTag()
         {
-            if (target == null && autoFindByTag && !string.IsNullOrEmpty(targetTag))
+            if (string.IsNullOrEmpty(targetTag)) return null;
+            
+            GameObject[] candidates = GameObject.FindGameObjectsWithTag(targetTag);
+            if (candidates.Length == 0) return null;
+
+            Transform closest = null;
+            float closestDist = float.MaxValue;
+
+            foreach (var obj in candidates)
             {
-                GameObject found = GameObject.FindGameObjectWithTag(targetTag);
-                if (found != null) target = found.transform;
+                float dist = Vector3.Distance(transform.position, obj.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = obj.transform;
+                }
             }
+            return closest;
         }
 
         public override int GetCurrentSubState()
         {
-            if (target == null) return 0;
+            // Si une cible manuelle est assignée, on la garde. Sinon, on cherche le plus proche par Tag.
+            Transform currentTarget = target;
+            if (currentTarget == null && autoFindByTag)
+            {
+                currentTarget = FindClosestWithTag();
+            }
+            
+            if (currentTarget == null) return 0;
 
-            float dist = Vector3.Distance(transform.position, target.position);
+            float dist = Vector3.Distance(transform.position, currentTarget.position);
 
             for (int i = 0; i < thresholds.Count; i++)
             {

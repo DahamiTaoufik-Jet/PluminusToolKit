@@ -49,42 +49,25 @@ namespace Pluminus.Integration.Input
         {
             if (virtualKeyboard == null) return;
 
-            // Analyse le bitmask de l'action envoyée par le cerveau
+            // Au lieu d'essayer d'envoyer des "Deltas" (ce qui fait planter Unity pour les claviers),
+            // On reconstruit l'état complet du clavier pour ce tick.
+            KeyboardState keyboardState = new KeyboardState();
+
             for (int i = 0; i < mapping.Count; i++)
             {
                 int bitValue = (1 << i);
-                bool isPressedNow = (actionId & bitValue) != 0;
-                bool wasPressedBefore = (lastActionId & bitValue) != 0;
-
-                // Vient juste d'être activé ce tick
-                if (isPressedNow && !wasPressedBefore)
+                if ((actionId & bitValue) != 0)
                 {
-                    ChangeKeysState(mapping[i].keysToPress, 1f);
-                }
-                // Vient juste d'être désactivé ce tick
-                else if (!isPressedNow && wasPressedBefore)
-                {
-                    ChangeKeysState(mapping[i].keysToPress, 0f);
+                    // Si ce bit est actif, on enfonce toutes les touches correspondantes
+                    foreach (var k in mapping[i].keysToPress)
+                    {
+                        keyboardState.Set(k, true);
+                    }
                 }
             }
 
-            lastActionId = actionId;
-        }
-
-        /// <summary>
-        /// Injecte un signal brut "Enfoncé" / "Relaché" directement dans le pipeline Input de Unity.
-        /// </summary>
-        private void ChangeKeysState(List<UnityEngine.InputSystem.Key> keys, float stateValue)
-        {
-            foreach (var k in keys)
-            {
-                var control = virtualKeyboard[k];
-                if (control != null)
-                {
-                    // Update state sans réécrire tout le bloc mémoire clavier
-                    InputSystem.QueueDeltaStateEvent(control, stateValue);
-                }
-            }
+            // On injecte l'état complet au Input System en une seule fois
+            InputSystem.QueueStateEvent(virtualKeyboard, keyboardState);
         }
 
         public int GetMaxActions()

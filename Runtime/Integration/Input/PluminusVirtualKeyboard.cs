@@ -31,9 +31,12 @@ namespace Pluminus.Integration.Input
 
         private void OnEnable()
         {
-            // Créé son propre clavier invisible dans Unity pour ne pas spammer/casser l'historique du vrai clavier.
-            // Le New Input System combinera ses frappes avec les manettes existantes !
+            // Créé son propre clavier invisible dans Unity.
             virtualKeyboard = InputSystem.AddDevice<Keyboard>("PluminusVirtualKeyboard");
+            
+            // CRITIQUE : Force ce clavier à devenir Keyboard.current immédiatement.
+            // Sans ça, Keyboard.current pointe vers le clavier physique et l'IA est ignorée !
+            virtualKeyboard.MakeCurrent();
         }
 
         private void OnDisable()
@@ -49,8 +52,7 @@ namespace Pluminus.Integration.Input
         {
             if (virtualKeyboard == null) return;
 
-            // Au lieu d'essayer d'envoyer des "Deltas" (ce qui fait planter Unity pour les claviers),
-            // On reconstruit l'état complet du clavier pour ce tick.
+            // Reconstruit l'état complet du clavier pour ce tick.
             KeyboardState keyboardState = new KeyboardState();
 
             for (int i = 0; i < mapping.Count; i++)
@@ -58,7 +60,6 @@ namespace Pluminus.Integration.Input
                 int bitValue = (1 << i);
                 if ((actionId & bitValue) != 0)
                 {
-                    // Si ce bit est actif, on enfonce toutes les touches correspondantes
                     foreach (var k in mapping[i].keysToPress)
                     {
                         keyboardState.Set(k, true);
@@ -66,8 +67,13 @@ namespace Pluminus.Integration.Input
                 }
             }
 
-            // On injecte l'état complet au Input System en une seule fois
-            InputSystem.QueueStateEvent(virtualKeyboard, keyboardState);
+            // CHANGEMENT CRITIQUE : InputState.Change applique l'état IMMÉDIATEMENT dans la même frame.
+            // QueueStateEvent attendait la frame suivante, ce qui causait des désynchronisations !
+            InputState.Change(virtualKeyboard, keyboardState);
+            
+            // Verrouille le clavier virtuel comme "Keyboard.current" à CHAQUE tick.
+            // Empêche le clavier physique de reprendre le contrôle si l'utilisateur touche une touche.
+            virtualKeyboard.MakeCurrent();
         }
 
         public int GetMaxActions()

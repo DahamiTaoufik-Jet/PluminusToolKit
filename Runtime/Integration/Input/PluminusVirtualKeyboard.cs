@@ -16,7 +16,8 @@ namespace Pluminus.Integration.Input
     }
 
     /// <summary>
-    /// Spoofer Hardware. Simule des pressions de touche réelles au niveau du système (New Input System).
+    /// Spoofer Hardware. Simule des pressions de touche réelles en injectant l'état
+    /// directement dans le clavier physique existant (New Input System).
     /// Mode TRUE NO-CODE : Permet de brancher l'IA sur un code métier existant sans jamais le modifier.
     /// </summary>
     [AddComponentMenu("Pluminus/Integration/Input/Pluminus Virtual Keyboard")]
@@ -26,31 +27,31 @@ namespace Pluminus.Integration.Input
         [Tooltip("Associe chaque bit du cerveau à des touches claviers réelles à enfoncer.")]
         public List<VirtualKeyMapping> mapping = new List<VirtualKeyMapping>();
 
-        private Keyboard virtualKeyboard;
-        private int lastActionId = 0;
+        // On capture une référence FIXE au clavier physique au démarrage.
+        // On n'en crée jamais un second : plus de conflit Keyboard.current !
+        private Keyboard targetKeyboard;
 
         private void OnEnable()
         {
-            // Créé son propre clavier invisible dans Unity.
-            virtualKeyboard = InputSystem.AddDevice<Keyboard>("PluminusVirtualKeyboard");
-            
-            // CRITIQUE : Force ce clavier à devenir Keyboard.current immédiatement.
-            // Sans ça, Keyboard.current pointe vers le clavier physique et l'IA est ignorée !
-            virtualKeyboard.MakeCurrent();
+            // Capture le clavier existant. Keyboard.current est garanti d'être le bon ici.
+            targetKeyboard = Keyboard.current;
         }
 
         private void OnDisable()
         {
-            if (virtualKeyboard != null)
+            // Relâche toutes les touches proprement à l'arrêt
+            if (targetKeyboard != null)
             {
-                InputSystem.RemoveDevice(virtualKeyboard);
-                virtualKeyboard = null;
+                InputState.Change(targetKeyboard, new KeyboardState());
             }
+            targetKeyboard = null;
         }
 
         public void ExecuteAction(int actionId)
         {
-            if (virtualKeyboard == null) return;
+            // Si le clavier n'a pas encore été capturé (ex: OnEnable avant que Unity ne crée le device)
+            if (targetKeyboard == null) targetKeyboard = Keyboard.current;
+            if (targetKeyboard == null) return;
 
             // Reconstruit l'état complet du clavier pour ce tick.
             KeyboardState keyboardState = new KeyboardState();
@@ -67,13 +68,9 @@ namespace Pluminus.Integration.Input
                 }
             }
 
-            // CHANGEMENT CRITIQUE : InputState.Change applique l'état IMMÉDIATEMENT dans la même frame.
-            // QueueStateEvent attendait la frame suivante, ce qui causait des désynchronisations !
-            InputState.Change(virtualKeyboard, keyboardState);
-            
-            // Verrouille le clavier virtuel comme "Keyboard.current" à CHAQUE tick.
-            // Empêche le clavier physique de reprendre le contrôle si l'utilisateur touche une touche.
-            virtualKeyboard.MakeCurrent();
+            // Injection IMMÉDIATE dans le clavier physique.
+            // Keyboard.current pointe TOUJOURS vers ce clavier → plus aucun conflit !
+            InputState.Change(targetKeyboard, keyboardState);
         }
 
         public int GetMaxActions()

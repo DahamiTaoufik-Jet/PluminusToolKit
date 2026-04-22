@@ -56,6 +56,25 @@ namespace Pluminus.Sensors
             return totalStates; // Le nombre total astronomique de possibilités !
         }
 
+#if UNITY_EDITOR
+        public int GetTheoreticalMaxStates()
+        {
+            PluminusStateSensor[] childrenSensors = GetComponentsInChildren<PluminusStateSensor>();
+            if (childrenSensors.Length == 0) return 1;
+
+            int totalStates = 1;
+            foreach (var sensor in childrenSensors)
+            {
+                int count = sensor.GetSubStateCount();
+                if (count > 0)
+                {
+                    totalStates *= count;
+                }
+            }
+            return totalStates;
+        }
+#endif
+
         public int GetCurrentStateId()
         {
             if (loadedSensors.Count == 0) return 0;

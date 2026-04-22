@@ -11,8 +11,14 @@ namespace Pluminus.Sensors
     public class DistanceToTargetSensor : PluminusStateSensor
     {
         [Header("Cible (Target)")]
+        [Tooltip("Glissez la cible manuellement ici. Si vide, le capteur cherchera automatiquement par Tag.")]
         public Transform target;
-        public bool autoFindPlayerTag = true;
+        
+        [Tooltip("Si la cible est vide, cherche automatiquement un objet avec ce Tag dans la scène.")]
+        public bool autoFindByTag = true;
+        
+        [Tooltip("Le Tag à chercher si aucune cible n'est assignée (ex: 'Player', 'Bullet', 'Enemy')")]
+        public string targetTag = "Player";
 
         [Header("Seuils de Distance")]
         [Tooltip("Ajoutez vos paliers de distance ici (ex: 2, 5, 10, 20).")]
@@ -23,7 +29,6 @@ namespace Pluminus.Sensors
 
         public override int GetSubStateCount()
         {
-            // N seuils = N+1 états (0=Cible manquante, puis état par zone)
             if (target == null) return 1;
             return thresholds.Count + 1;
         }
@@ -31,13 +36,21 @@ namespace Pluminus.Sensors
         protected override void Awake()
         {
             base.Awake();
-            if (target == null && autoFindPlayerTag)
-            {
-                GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if (player != null) target = player.transform;
-            }
-            // Tri automatique par sécurité
+            FindTargetIfNeeded();
             thresholds.Sort();
+        }
+
+        /// <summary>
+        /// Cherche la cible par Tag si aucune n'est assignée manuellement.
+        /// Appelé au démarrage et à chaque lecture si la cible a été détruite.
+        /// </summary>
+        private void FindTargetIfNeeded()
+        {
+            if (target == null && autoFindByTag && !string.IsNullOrEmpty(targetTag))
+            {
+                GameObject found = GameObject.FindGameObjectWithTag(targetTag);
+                if (found != null) target = found.transform;
+            }
         }
 
         public override int GetCurrentSubState()

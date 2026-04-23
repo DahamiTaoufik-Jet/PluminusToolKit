@@ -11,11 +11,17 @@ namespace Pluminus.Core
     {
         public enum ConditionType
         {
-            [Tooltip("Vérifie si un Bit spécifique est ACTIF dans l'action choisie par l'IA (ex: Bouton Nord est appuyé)")]
+            [Tooltip("Vérifie si un Bit spécifique est ACTIF dans l'action choisie par l'IA (utile pour PluminusVirtualGamepad en bitmask)")]
             ActionBitIsActive,
 
-            [Tooltip("Vérifie si un Bit spécifique est INACTIF dans l'action choisie par l'IA")]
+            [Tooltip("Vérifie si un Bit spécifique est INACTIF dans l'action choisie par l'IA (utile pour PluminusVirtualGamepad en bitmask)")]
             ActionBitIsInactive,
+
+            [Tooltip("Vérifie si l'IA a choisi EXACTEMENT cette action (utile pour PluminusActionRouter en actions discrètes)")]
+            ActionEquals,
+
+            [Tooltip("Vérifie si l'IA a choisi N'IMPORTE QUELLE action SAUF celle-ci")]
+            ActionNotEquals,
 
             [Tooltip("Vérifie si un capteur donné retourne un état précis (ex: Le capteur distance voit 'Proche')")]
             SensorEquals,
@@ -29,6 +35,9 @@ namespace Pluminus.Core
 
         [Tooltip("Pour ActionBit : L'index du bouton dans le bitmask (0 = premier bouton, 1 = deuxième...)")]
         public int bitIndex;
+
+        [Tooltip("Pour ActionEquals / ActionNotEquals : L'ID exact de l'action à vérifier (ex: 0 = Idle, 1 = ShieldN, ...)")]
+        public int actionId;
 
         [Tooltip("Pour Sensor : Le capteur No-Code à surveiller")]
         public Sensors.PluminusStateSensor sensor;
@@ -128,6 +137,12 @@ namespace Pluminus.Core
 
                 case RuleCondition.ConditionType.ActionBitIsInactive:
                     return (actionId & (1 << condition.bitIndex)) == 0;
+
+                case RuleCondition.ConditionType.ActionEquals:
+                    return actionId == condition.actionId;
+
+                case RuleCondition.ConditionType.ActionNotEquals:
+                    return actionId != condition.actionId;
 
                 case RuleCondition.ConditionType.SensorEquals:
                     if (condition.sensor == null) return false;

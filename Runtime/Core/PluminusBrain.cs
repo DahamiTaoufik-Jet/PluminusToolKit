@@ -127,17 +127,26 @@ namespace Pluminus.Core
 
                 // Réduit très légèrement le taux d'exploration pour stabiliser l'IA au fil du temps
                 currentEpsilon = Mathf.Max(brainConfig.minExplorationRate, currentEpsilon * brainConfig.explorationDecayRate);
-            }
 
-            // Remet le score de récompenses à 0 pour la prochaine action
-            accumulatedReward = 0f;
+                // On ne consomme les récompenses qu'une fois réellement attribuées à une transition.
+                // Sinon (pas d'action précédente), on les conserve pour la prochaine transition apprenable.
+                accumulatedReward = 0f;
+            }
 
             // 3. DECIDER de la prochaine action
             int chosenAction = -1;
 
             if (useHeuristic)
             {
-                chosenAction = heuristicActionId;
+                // On valide l'action injectée pour éviter toute écriture hors-bornes dans la Q-Table au tick suivant.
+                if (heuristicActionId >= 0 && heuristicActionId < actionExecutor.GetMaxActions() && actionExecutor.IsActionValid(heuristicActionId))
+                {
+                    chosenAction = heuristicActionId;
+                }
+                else
+                {
+                    chosenAction = -1;
+                }
             }
             else
             {

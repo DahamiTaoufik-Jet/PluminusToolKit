@@ -15,24 +15,40 @@ namespace Pluminus.Sensors.Extended
         [Header("Collision")]
         public LayerMask obstacleMask;
 
+        [Tooltip("Si rempli, seuls les colliders portant ce Tag comptent. Laissez vide pour détecter n'importe quel objet du LayerMask.")]
+        public string targetTag = "";
+
+        // Buffer réutilisé pour éviter de générer du garbage à chaque Tick.
+        private static readonly Collider[] _hitsBuffer = new Collider[16];
+
         public override int GetSubStateCount() => 2;
 
         public override int GetCurrentSubState()
         {
             Vector3 worldPos = transform.position + transform.rotation * offset;
-            bool hit = false;
+            int count = 0;
 
             switch (shape)
             {
                 case ShapeType.Sphere:
-                    hit = Physics.CheckSphere(worldPos, size.x, obstacleMask);
+                    count = Physics.OverlapSphereNonAlloc(worldPos, size.x, _hitsBuffer, obstacleMask);
                     break;
                 case ShapeType.Box:
-                    hit = Physics.CheckBox(worldPos, size / 2f, transform.rotation, obstacleMask);
+                    count = Physics.OverlapBoxNonAlloc(worldPos, size / 2f, _hitsBuffer, transform.rotation, obstacleMask);
                     break;
             }
 
-            return hit ? 1 : 0;
+            if (count == 0) return 0;
+
+            // Pas de filtre par tag : ancien comportement (tout ce qui est dans le LayerMask)
+            if (string.IsNullOrEmpty(targetTag)) return 1;
+
+            // Filtre par tag : au moins un collider touché doit porter le tag demandé.
+            for (int i = 0; i < count; i++)
+            {
+                if (_hitsBuffer[i] != null && _hitsBuffer[i].CompareTag(targetTag)) return 1;
+            }
+            return 0;
         }
 
         private void OnDrawGizmosSelected()

@@ -94,12 +94,20 @@ namespace Pluminus.Integration
             transform.position = spawnPosition;
             transform.rotation = spawnRotation;
             
-            // Si l'objet a un Rigidbody, on le fige
+            // Si l'objet a un Rigidbody, on le fige (Unity 6+: rb.velocity renommé linearVelocity)
             Rigidbody rb = GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.velocity = Vector3.zero;
+                rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
+            }
+
+            // Idem côté 2D pour les projets Platformer / Top-Down
+            Rigidbody2D rb2d = GetComponent<Rigidbody2D>();
+            if (rb2d != null)
+            {
+                rb2d.linearVelocity = Vector2.zero;
+                rb2d.angularVelocity = 0f;
             }
 
             timer = 0;

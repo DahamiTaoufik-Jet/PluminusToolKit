@@ -26,12 +26,15 @@ namespace Pluminus.Sensors
             // L'IA cligne des yeux toutes les 0.05 secondes.
             // On s'assure de renvoyer VRAI si l'objet est posé dedans (isCurrentlyInside)
             // OU si un objet est passé si vite qu'il est déjà reparti depuis le dernier clignement (pulseMemory).
+            // NB : La consommation du pulse est faite en LateUpdate, pour rester cohérent entre plusieurs lecteurs (Eyes, RuleEngine...) sur la même frame.
             bool finalState = isCurrentlyInside || pulseMemory;
-            
-            // On efface la mémoire de l'éclair pour la prochaine observation
-            pulseMemory = false;
-            
             return finalState ? 1 : 0;
+        }
+
+        private void LateUpdate()
+        {
+            // Fin de frame : on efface la mémoire de l'éclair pour la prochaine observation.
+            pulseMemory = false;
         }
 
         private void OnTriggerStay2D(Collider2D collision)

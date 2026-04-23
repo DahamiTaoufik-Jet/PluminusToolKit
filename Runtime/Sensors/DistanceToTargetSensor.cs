@@ -150,7 +150,8 @@ namespace Pluminus.Sensors
                 if (dist <= thresholds[i]) return i + 1;
             }
 
-            return thresholds.Count + 1; // Hors de portée (dernière zone)
+            // Hors de portée : on reste dans la dernière zone définie (cohérent avec GetSubStateCount = thresholds.Count + 1).
+            return thresholds.Count;
         }
 
         private void OnDrawGizmosSelected()

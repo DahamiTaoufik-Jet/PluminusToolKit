@@ -4,8 +4,8 @@ namespace Pluminus.Sensors.Extended
 {
     /// <summary>
     /// Capteur No-Code Multi-Forme (Box/Sphere).
-    /// Gère son propre Collider 3D et utilise OnTriggerStay pour une détection robuste.
-    /// Supporte la détection par Tag (Bullet, Player, etc.).
+    /// Gère son propre Collider 3D (Trigger) et utilise OnTriggerStay/Exit pour une détection indépendante.
+    /// Chaque instance possède SON propre collider : plusieurs ContactSensor peuvent cohabiter sans se "contaminer".
     /// </summary>
     [AddComponentMenu("Pluminus/Sensors/Contact Sensor (Multi-Shape)")]
     public class ContactSensor : PluminusStateSensor
@@ -18,8 +18,11 @@ namespace Pluminus.Sensors.Extended
         public Vector3 offset = Vector3.zero;
 
         [Header("Détection")]
-        [Tooltip("Le Tag de l'objet à détecter (ex: Bullet)")]
+        [Tooltip("Le Tag de l'objet à détecter (ex: Bullet). Laissez vide pour détecter n'importe quel collider qui entre dans la zone.")]
         public string targetTag = "Bullet";
+
+        [Tooltip("Si coché, les colliders appartenant à l'agent porteur (ce GameObject et sa hiérarchie) sont ignorés. Évite l'auto-détection persistante.")]
+        public bool ignoreSelfHierarchy = true;
 
         private bool isCurrentlyInside = false;
         private bool pulseMemory = false;
@@ -29,15 +32,13 @@ namespace Pluminus.Sensors.Extended
 
         private void SetupCollider()
         {
-            // Nettoie l'ancien collider silencieusement si la forme a changé
+            // Désactive les colliders dont la forme ne correspond plus au choix.
             Collider[] existing = GetComponents<Collider>();
             foreach (var coll in existing)
             {
                 if ((shape == ShapeType.Box && !(coll is BoxCollider)) ||
                     (shape == ShapeType.Sphere && !(coll is SphereCollider)))
                 {
-                    // On ne peut pas facilement détruire en OnValidate, 
-                    // donc on prévient juste l'utilisateur ou on désactive.
                     coll.enabled = false;
                 }
             }
@@ -62,64 +63,47 @@ namespace Pluminus.Sensors.Extended
             }
         }
 
-        [Tooltip("Si rempli, seuls les colliders portant ce Tag comptent. Laissez vide pour détecter n'importe quel objet du LayerMask.")]
-        public string targetTag = "";
-
-        [Tooltip("Si coché, les colliders appartenant à l'agent porteur (ce GameObject et sa hiérarchie) sont ignorés. Évite l'auto-détection persistante.")]
-        public bool ignoreSelfHierarchy = true;
-
-        // Buffer réutilisé pour éviter de générer du garbage à chaque Tick.
-        private static readonly Collider[] _hitsBuffer = new Collider[16];
-
-        // Racine de l'agent (GameObject le plus haut dans la hiérarchie) — calculée au premier besoin.
-        private Transform _selfRoot;
-
         public override int GetSubStateCount() => 2;
 
         public override int GetCurrentSubState()
         {
-            Vector3 worldPos = transform.position + transform.rotation * offset;
-            int count = 0;
+            // Cohérent avec TriggerTagSensor : VRAI si une cible est dedans OU vient de passer trop vite pour être vue par le prochain tick.
+            return (isCurrentlyInside || pulseMemory) ? 1 : 0;
+        }
 
         private void OnTriggerStay(Collider other)
         {
-            if (!string.IsNullOrEmpty(targetTag) && other.CompareTag(targetTag))
-            {
-                case ShapeType.Sphere:
-                    count = Physics.OverlapSphereNonAlloc(worldPos, size.x, _hitsBuffer, obstacleMask);
-                    break;
-                case ShapeType.Box:
-                    count = Physics.OverlapBoxNonAlloc(worldPos, size / 2f, _hitsBuffer, transform.rotation, obstacleMask);
-                    break;
-            }
+            if (!IsValidTarget(other)) return;
+            isCurrentlyInside = true;
+            pulseMemory = true;
         }
 
-            if (count == 0) return 0;
-
-            if (ignoreSelfHierarchy && _selfRoot == null) _selfRoot = transform.root;
-            bool filterByTag = !string.IsNullOrEmpty(targetTag);
-
-            for (int i = 0; i < count; i++)
-            {
-                var col = _hitsBuffer[i];
-                if (col == null) continue;
-
-                // Ignore tout collider appartenant à la hiérarchie du porteur (anti auto-détection).
-                if (ignoreSelfHierarchy && col.transform.root == _selfRoot) continue;
-
-                if (filterByTag && !col.CompareTag(targetTag)) continue;
-
-                return 1;
-            }
-            return 0;
+        private void OnTriggerExit(Collider other)
+        {
+            if (!IsValidTarget(other)) return;
+            // Si un autre collider valide reste dans la zone, OnTriggerStay remettra isCurrentlyInside à true à la prochaine frame physique.
+            isCurrentlyInside = false;
         }
 
-        // Les Gizmos sont gérés par Unity via les Colliders, mais on peut ajouter un feedback visuel
+        private bool IsValidTarget(Collider other)
+        {
+            if (other == null) return false;
+            if (ignoreSelfHierarchy && other.transform.root == transform.root) return false;
+            if (!string.IsNullOrEmpty(targetTag) && !other.CompareTag(targetTag)) return false;
+            return true;
+        }
+
+        private void LateUpdate()
+        {
+            // Fin de frame : on efface la mémoire du pulse (cohérent avec TriggerTagSensor).
+            pulseMemory = false;
+        }
+
         private void OnDrawGizmosSelected()
         {
-            bool isDetected = Application.isPlaying && isCurrentlyInside;
+            bool isDetected = Application.isPlaying && (isCurrentlyInside || pulseMemory);
             Gizmos.color = isDetected ? new Color(1, 0, 0, 0.5f) : new Color(0, 1, 0, 0.3f);
-            
+
             Vector3 worldPos = transform.position + transform.rotation * offset;
             if (shape == ShapeType.Box)
             {

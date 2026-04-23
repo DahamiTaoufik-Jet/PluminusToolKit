@@ -62,30 +62,43 @@ namespace Pluminus.Sensors.Extended
             }
         }
 
+        [Tooltip("Si rempli, seuls les colliders portant ce Tag comptent. Laissez vide pour détecter n'importe quel objet du LayerMask.")]
+        public string targetTag = "";
+
+        // Buffer réutilisé pour éviter de générer du garbage à chaque Tick.
+        private static readonly Collider[] _hitsBuffer = new Collider[16];
+
         public override int GetSubStateCount() => 2;
 
         public override int GetCurrentSubState()
         {
-            bool finalState = isCurrentlyInside || pulseMemory;
-            pulseMemory = false;
-            return finalState ? 1 : 0;
-        }
+            Vector3 worldPos = transform.position + transform.rotation * offset;
+            int count = 0;
 
         private void OnTriggerStay(Collider other)
         {
             if (!string.IsNullOrEmpty(targetTag) && other.CompareTag(targetTag))
             {
-                isCurrentlyInside = true;
-                pulseMemory = true;
+                case ShapeType.Sphere:
+                    count = Physics.OverlapSphereNonAlloc(worldPos, size.x, _hitsBuffer, obstacleMask);
+                    break;
+                case ShapeType.Box:
+                    count = Physics.OverlapBoxNonAlloc(worldPos, size / 2f, _hitsBuffer, transform.rotation, obstacleMask);
+                    break;
             }
         }
 
-        private void OnTriggerExit(Collider other)
-        {
-            if (!string.IsNullOrEmpty(targetTag) && other.CompareTag(targetTag))
+            if (count == 0) return 0;
+
+            // Pas de filtre par tag : ancien comportement (tout ce qui est dans le LayerMask)
+            if (string.IsNullOrEmpty(targetTag)) return 1;
+
+            // Filtre par tag : au moins un collider touché doit porter le tag demandé.
+            for (int i = 0; i < count; i++)
             {
-                isCurrentlyInside = false;
+                if (_hitsBuffer[i] != null && _hitsBuffer[i].CompareTag(targetTag)) return 1;
             }
+            return 0;
         }
 
         // Les Gizmos sont gérés par Unity via les Colliders, mais on peut ajouter un feedback visuel

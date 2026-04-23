@@ -65,22 +65,25 @@ namespace Pluminus.Core
         {
             float[] values = GetStateValues(stateId);
             float max = float.MinValue;
-            int bestAction = 0;
-            bool foundValid = false;
-
+            
+            // Étape 1 : Trouver la meilleure valeur
             for (int i = 0; i < values.Length; i++)
             {
-                // Ignore les actions invalides (ex: en cooldown)
                 if (isValidAction != null && !isValidAction(i)) continue;
-
-                if (!foundValid || values[i] > max)
-                {
-                    max = values[i];
-                    bestAction = i;
-                    foundValid = true;
-                }
+                if (values[i] > max) max = values[i];
             }
-            return bestAction;
+
+            // Étape 2 : Collecter TOUTES les actions qui ont ce meilleur score
+            var bestActions = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (isValidAction != null && !isValidAction(i)) continue;
+                if (values[i] >= max) bestActions.Add(i);
+            }
+
+            // Étape 3 : Choisir aléatoirement parmi les ex-aequo (évite le biais vers l'action 0)
+            if (bestActions.Count == 0) return 0;
+            return bestActions[UnityEngine.Random.Range(0, bestActions.Count)];
         }
     }
 }

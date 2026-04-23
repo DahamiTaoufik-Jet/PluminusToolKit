@@ -65,8 +65,14 @@ namespace Pluminus.Sensors.Extended
         [Tooltip("Si rempli, seuls les colliders portant ce Tag comptent. Laissez vide pour détecter n'importe quel objet du LayerMask.")]
         public string targetTag = "";
 
+        [Tooltip("Si coché, les colliders appartenant à l'agent porteur (ce GameObject et sa hiérarchie) sont ignorés. Évite l'auto-détection persistante.")]
+        public bool ignoreSelfHierarchy = true;
+
         // Buffer réutilisé pour éviter de générer du garbage à chaque Tick.
         private static readonly Collider[] _hitsBuffer = new Collider[16];
+
+        // Racine de l'agent (GameObject le plus haut dans la hiérarchie) — calculée au premier besoin.
+        private Transform _selfRoot;
 
         public override int GetSubStateCount() => 2;
 
@@ -90,13 +96,20 @@ namespace Pluminus.Sensors.Extended
 
             if (count == 0) return 0;
 
-            // Pas de filtre par tag : ancien comportement (tout ce qui est dans le LayerMask)
-            if (string.IsNullOrEmpty(targetTag)) return 1;
+            if (ignoreSelfHierarchy && _selfRoot == null) _selfRoot = transform.root;
+            bool filterByTag = !string.IsNullOrEmpty(targetTag);
 
-            // Filtre par tag : au moins un collider touché doit porter le tag demandé.
             for (int i = 0; i < count; i++)
             {
-                if (_hitsBuffer[i] != null && _hitsBuffer[i].CompareTag(targetTag)) return 1;
+                var col = _hitsBuffer[i];
+                if (col == null) continue;
+
+                // Ignore tout collider appartenant à la hiérarchie du porteur (anti auto-détection).
+                if (ignoreSelfHierarchy && col.transform.root == _selfRoot) continue;
+
+                if (filterByTag && !col.CompareTag(targetTag)) continue;
+
+                return 1;
             }
             return 0;
         }

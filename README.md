@@ -4,10 +4,13 @@ Pluminus est un toolkit Unity pour créer des IA adaptatives (combat, défense, 
 Le système est orienté **No-Code** : ce qui implique une configuration par composants Unity, `ScriptableObject`, events et règles.
 
 
-Vous trouverez ci-dessous un exemple d'entrainement d'un jeu qui consiste de stoper les boules prenant de quatre direction:<img width="879" height="533" alt="Sensor Distance" src="https://github.com/user-attachments/assets/fc59d193-02a6-4b91-960e-48abbf2b32b4" />
+Vous trouverez ci-dessous un exemple d'entrainement d'un jeu qui consiste de stoper les boules prenant de quatre direction:
 
 
-https://github.com/user-attachments/assets/4138fd69-3d7e-4279-9719-544358625646
+
+https://github.com/user-attachments/assets/3209e65a-6f76-4941-9bbc-763af64f3891
+
+
 
 ---
 
@@ -84,8 +87,7 @@ En résumé :
 
 - `DistanceToTargetSensor`
   
- <img width="1227" height="511" alt="Etage Sensor" src="https://github.com/user-attachments/assets/c3f585ac-2491-4db0-8db4-90a5d06394ef" />
-<img width="879" height="533" alt="Sensor Distance" src="https://github.com/user-attachments/assets/b89b1395-ccae-4b36-aa87-066199e19724" />
+<img width="879" height="533" alt="Sensor Distance" src="https://github.com/user-attachments/assets/c7d6fa2c-5275-4aa8-8dc7-b959d4cb1107" />
 
 
 - `RaycastTagSensor`
@@ -99,25 +101,28 @@ En résumé :
 - `ContactSensor`
 - `ElevationSensor`
   
-
-<img width="1227" height="511" alt="Etage Sensor" src="https://github.com/user-attachments/assets/4fa3ef43-b23a-417d-ade0-4ed2419f2b8c" />
+<img width="1227" height="511" alt="Etage Sensor" src="https://github.com/user-attachments/assets/4990d7c8-9bc8-47b5-b0d4-5fb5058d25dd" />
 
 
 - `GridSensor`
   
-<img width="1081" height="552" alt="Exemple Grid" src="https://github.com/user-attachments/assets/ffa0ce0f-336e-460a-8478-8cb036018937" />
+<img width="1081" height="552" alt="Exemple Grid" src="https://github.com/user-attachments/assets/c6414770-f67e-4e1b-b199-918f82dfc5e0" />
+
+
 - `QuadrantSensor`
   
-<img width="1123" height="352" alt="Sensor Quadrant" src="https://github.com/user-attachments/assets/18fd59a3-07aa-4e21-9562-ad2c49da13c3" />
+ <img width="1123" height="352" alt="Sensor Quadrant" src="https://github.com/user-attachments/assets/75bac978-e595-4264-9260-7606bd9197a9" />
 
 
 - `ValueSensor`
   
-<img width="888" height="399" alt="Value Sensors" src="https://github.com/user-attachments/assets/bbe8a9f0-1b0c-4423-945d-254c5abf7b2d" />
+ <img width="888" height="399" alt="Value Sensors" src="https://github.com/user-attachments/assets/ce882100-aca5-436d-aa40-46813f6c4001" />
+
 
 - `VectorSensor`
   
-<img width="890" height="358" alt="Sensors de Calcul de vecteur de direction" src="https://github.com/user-attachments/assets/faee24ce-7300-42e0-bd76-c6ec94d6eecc" />
+<img width="890" height="358" alt="Sensors de Calcul de vecteur de direction" src="https://github.com/user-attachments/assets/ace161a3-302f-47cb-9211-b60ad9775739" />
+
 Notes :
 
 - Plus vous ajoutez de sensors et de paliers, plus l'espace d'état grossit.

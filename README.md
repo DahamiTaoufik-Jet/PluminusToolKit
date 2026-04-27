@@ -4,7 +4,7 @@ Pluminus est un toolkit Unity pour créer des IA adaptatives (combat, défense, 
 Le système est orienté **No-Code** : ce qui implique une configuration par composants Unity, `ScriptableObject`, events et règles.
 
 
-Vous trouverez ci-dessous un exemple d'entraînement d'un jeu qui consiste à stopper les boules prenant de quatre directions :
+Vous trouverez ci-dessous un exemple d'entraînement d'un jeu qui consiste à stopper les boules provenant de quatre directions :
 
 
 

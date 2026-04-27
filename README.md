@@ -3,6 +3,8 @@
 Pluminus est un toolkit Unity pour créer des IA adaptatives (combat, défense, réaction) via **Q-Learning discret**.
 Le système est orienté **No-Code** : ce qui implique une configuration par composants Unity, `ScriptableObject`, events et règles.
 
+https://github.com/user-attachments/assets/4138fd69-3d7e-4279-9719-544358625646
+
 ---
 
 ## 1) Ce que fait Pluminus

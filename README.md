@@ -4,7 +4,7 @@ Pluminus est un toolkit Unity pour créer des IA adaptatives (combat, défense, 
 Le système est orienté **No-Code** : ce qui implique une configuration par composants Unity, `ScriptableObject`, events et règles.
 
 
-Vous trouverez ci-dessous un exemple d'entraînement d'un jeu qui consiste à stopper les boules provenant de quatre directions :
+Ci-dessous un exemple d'entraînement d'un jeu qui consiste à stopper les boules provenant de quatre directions :
 
 
 
@@ -131,9 +131,9 @@ En résumé :
 
 
 
-Notes :
 
-- Plus vous ajoutez de sensors et de paliers, plus l'espace d'état grossit.
+
+- Plus on ajoute de sensors et de paliers, plus l'espace d'état grossit.
 - Un espace d'état trop grand ralentit l'apprentissage.
 
 ---
@@ -186,47 +186,4 @@ Le dashboard suit notamment :
 - epsilon courant,
 - historique d'épisodes et courbe temps réel.
 
-Utiliser ces indicateurs pour valider si l'IA apprend réellement ou stagne.
 
----
-
-## 9) Captures & documentation visuelle
-
-Les captures sont dans : `Docs/ComponentScreens`.
-
-- README visuel : `Docs/ComponentScreens/README.md`
-- Ce README contient les images en preview Markdown.
-
----
-
-## 10) Index des README spécialisés
-
-- Vue Sensors : `Runtime/Sensors/README.md`
-- Vue Data : `Runtime/Data/README.md`
-- Brain/Eyes/Tempo : `Runtime/README_Brain_Eyes_Tempo.md`
-- Captures composants : `Docs/ComponentScreens/README.md`
-
----
-
-## 11) Bonnes pratiques
-
-- Commencer simple, complexifier progressivement.
-- Garder des flags de reward stables et explicites.
-- Vérifier la cohérence `GetSubStateCount()` / `GetCurrentSubState()`.
-- Utiliser `PerformSoftReset()` à chaque fin d'épisode.
-- Éviter la redondance de sensors qui encodent la même info.
-
----
-
-## 12) Résumé produit
-
-Pluminus fournit une chaîne complète et modulaire pour entraîner une IA gameplay dans Unity :
-
-- perception (`Sensors`, `Eyes`),
-- décision/apprentissage (`Brain`, Q-Learning),
-- exécution (`Action Router`),
-- récompense (`RewardProfile`, `RuleEngine`),
-- cadence/reset (`TempoDecision`),
-- persistance et analytics (`QTableData`, `PluminusAnalyticsData`).
-
-C'est adapté pour construire rapidement des comportements adaptatifs sans coder un moteur RL maison.

@@ -138,7 +138,7 @@ Notes :
 
 ---
 
-## 5) Setup minimal (recommandé)
+## 5) Setup minimal
 
 1. Ajouter `PluminusBrain` sur l'agent.
 2. Créer/assigner `BrainConfig` et `RewardProfile`.

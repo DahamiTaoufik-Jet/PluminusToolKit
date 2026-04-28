@@ -174,6 +174,11 @@ Cas typique défense :
 - ET `SensorEquals` = projectile à l'Est
 - ALORS appliquer `Reward Flag` positif.
 
+  
+
+  <img width="874" height="595" alt="Exemple Rule Engine Complexe" src="https://github.com/user-attachments/assets/e4c21839-023f-4e0c-b1e0-3318cc26340a" />
+
+
 ---
 
 ## 8) Dashboard & analytics
@@ -184,6 +189,10 @@ Le dashboard suit notamment :
 - winrate global / récent,
 - précision récente,
 - epsilon courant,
-- historique d'épisodes et courbe temps réel.
+- historique d'épisodes et courbe temps réel
+  
+
+  <img width="884" height="474" alt="Exemple Dashboard" src="https://github.com/user-attachments/assets/b487f90e-495d-47ee-a48a-d86d5da26d86" />
+
 
 

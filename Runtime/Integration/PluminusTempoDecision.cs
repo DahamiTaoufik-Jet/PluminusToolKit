@@ -4,6 +4,15 @@ using Pluminus.Core;
 
 namespace Pluminus.Integration
 {
+    public enum TrainingMode
+    {
+        [Tooltip("L'agent tourne en continu sans jamais se reinitialiser. Ideal pour un ennemi qui s'adapte en temps reel au joueur.")]
+        Infinite,
+
+        [Tooltip("L'agent vit des cycles courts : debut -> actions -> condition terminale -> reset -> recommence. Ideal pour l'entrainement pur.")]
+        Episode
+    }
+
     /// <summary>
     /// Le Manager d'Agent No-Code.
     /// Ce script sert de 'colle' entre votre personnage et Pluminus sans que vous ayez à coder.
@@ -14,6 +23,10 @@ namespace Pluminus.Integration
     {
         [Header("Cible")]
         public PluminusBrain brain;
+
+        [Header("Mode d'Entrainement")]
+        [Tooltip("Infinite = l'agent ne se reset jamais (HP infini, adaptation temps reel). Episode = cycle reset automatique entre chaque episode.")]
+        public TrainingMode trainingMode = TrainingMode.Episode;
 
         [Header("Rythme de Décision")]
         [Tooltip("Si coché, l'IA décide automatiquement à intervalle régulier.")]
@@ -32,20 +45,13 @@ namespace Pluminus.Integration
         public bool limitFrameRate = true;
         public int targetFrameRate = 60;
 
-        [Header("Gestion d'Épisode (Reset)")]
-        [Tooltip("Point de départ pour le Soft Reset (laisse vide pour utiliser la position au Start).")]
-        public Transform startPoint;
+        [Header("Gestion d'Épisode (Mode Episode uniquement)")]
+        [Tooltip("Declenche quand un episode se termine. Glissez vos PluminusResetable.ResetToInitial() ici !")]
         public UnityEvent OnReset;
-
-        private Vector3 spawnPosition;
-        private Quaternion spawnRotation;
 
         private void Awake()
         {
             if (brain == null) brain = GetComponent<PluminusBrain>();
-            
-            spawnPosition = (startPoint != null) ? startPoint.position : transform.position;
-            spawnRotation = (startPoint != null) ? startPoint.rotation : transform.rotation;
         }
 
         private void Update()
@@ -84,36 +90,19 @@ namespace Pluminus.Integration
         }
 
         /// <summary>
-        /// Téléporte l'agent au début et réinitialise son état interne.
-        /// À appeler depuis vos événements de collision/mort via l'inspecteur.
+        /// Termine l'episode et declenche le reset de tous les objets branches sur OnReset.
+        /// En mode Infinite, seul EndEpisode est appele (comptabilite des stats) sans reset.
         /// </summary>
         public void PerformSoftReset()
         {
             if (brain != null) brain.EndEpisode();
 
-            transform.position = spawnPosition;
-            transform.rotation = spawnRotation;
-            
-            // Si l'objet a un Rigidbody, on le fige (Unity 6+: rb.velocity renommé linearVelocity)
-            Rigidbody rb = GetComponent<Rigidbody>();
-            if (rb != null)
+            if (trainingMode == TrainingMode.Episode)
             {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
+                timer = 0;
+                OnReset?.Invoke();
+                Debug.Log($"<color=green>[Pluminus] Episode Reset sur {gameObject.name}</color>");
             }
-
-            // Idem côté 2D pour les projets Platformer / Top-Down
-            Rigidbody2D rb2d = GetComponent<Rigidbody2D>();
-            if (rb2d != null)
-            {
-                rb2d.linearVelocity = Vector2.zero;
-                rb2d.angularVelocity = 0f;
-            }
-
-            timer = 0;
-            OnReset?.Invoke();
-            
-            Debug.Log($"<color=green>[Pluminus] Soft Reset effectué sur {gameObject.name}</color>");
         }
     }
 }

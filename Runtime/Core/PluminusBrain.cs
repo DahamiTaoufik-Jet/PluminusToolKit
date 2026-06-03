@@ -39,6 +39,15 @@ namespace Pluminus.Core
         // Le moteur interne d'apprentissage
         private QLearningEngine learningEngine;
 
+        [Header("Rythme de Decision")]
+        [Tooltip("Si coche, l'IA decide automatiquement a intervalle regulier.")]
+        public bool autoTick = true;
+        [Tooltip("Temps de base entre chaque decision (en secondes).")]
+        public float decisionRate = 0.1f;
+        [Tooltip("Si coche, l'IA decidera plus souvent quand le jeu est accelere pour eviter de rater des obstacles.")]
+        public bool dynamicDecisionRate = true;
+        private float tickTimer;
+
         [Header("Mode Heuristique (Manuel)")]
         [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
         public bool useHeuristic = false;
@@ -205,6 +214,19 @@ namespace Pluminus.Core
         private void Update()
         {
             if (!Application.isPlaying) return;
+
+            // Auto-Tick : le cerveau decide a son propre rythme
+            if (autoTick && !useHeuristic)
+            {
+                float currentDecisionRate = dynamicDecisionRate ? (decisionRate / Mathf.Max(1f, Time.timeScale)) : decisionRate;
+                tickTimer += Time.unscaledDeltaTime;
+
+                if (tickTimer >= currentDecisionRate)
+                {
+                    TickDecision();
+                    tickTimer = 0;
+                }
+            }
 
             // Capture de stats pour le mode continu (toutes les secondes)
             statsTimer += Time.deltaTime;

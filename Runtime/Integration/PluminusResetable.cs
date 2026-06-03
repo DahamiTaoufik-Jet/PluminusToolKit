@@ -5,7 +5,7 @@ namespace Pluminus.Integration
     /// <summary>
     /// Composant No-Code de Reset d'Episode.
     /// Posez-le sur tout objet de la scene qui doit revenir a son etat initial entre deux episodes.
-    /// Glissez sa methode ResetToInitial() dans le OnReset du PluminusTempoDecision.
+    /// Glissez sa methode ResetToInitial() dans le OnReset du PluminusTrainingManager.
     /// </summary>
     [AddComponentMenu("Pluminus/Integration/Pluminus Resetable")]
     public class PluminusResetable : MonoBehaviour
@@ -57,7 +57,7 @@ namespace Pluminus.Integration
         }
 
         /// <summary>
-        /// Restaure l'objet a son etat initial. Glissez cette methode dans le OnReset du TempoDecision !
+        /// Restaure l'objet a son etat initial. Glissez cette methode dans le OnReset du TrainingManager !
         /// </summary>
         public void ResetToInitial()
         {

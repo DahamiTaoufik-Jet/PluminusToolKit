@@ -20,7 +20,7 @@ namespace Pluminus.Sensors.Extended
     /// Le code metier du dev n'a qu'a appeler SetAxis(index, valeur) pour signaler un changement.
     /// PluminusEyes lit le resultat combine automatiquement.
     /// </summary>
-    [AddComponentMenu("Pluminus/Sensors/Array State Sensor")]
+    [AddComponentMenu("Pluminus/Sensors/Pluminus Array State Sensor")]
     public class PluminusArrayStateSensor : PluminusStateSensor
     {
         [Header("Axes d'Etat")]

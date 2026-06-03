@@ -21,7 +21,7 @@ namespace Pluminus.Sensors.Extended
     /// PluminusEyes lit le resultat combine automatiquement.
     /// </summary>
     [AddComponentMenu("Pluminus/Sensors/Array State Sensor")]
-    public class ArrayStateSensor : PluminusStateSensor
+    public class PluminusArrayStateSensor : PluminusStateSensor
     {
         [Header("Axes d'Etat")]
         [Tooltip("Definissez vos dimensions ici (ex: Axe 0 = Type Action, Axe 1 = Phase).")]

@@ -53,8 +53,8 @@ namespace Pluminus.Core
         public bool useHeuristic = false;
 
         [Header("Auto-Save")]
-        [Tooltip("Si > 0 et qu'un Memory Asset est assigne, exporte automatiquement la Q-Table tous les N episodes.")]
-        public int autoSaveEveryNEpisodes = 0;
+        [Tooltip("Si > 0 et qu'un Memory Asset est assigne, exporte automatiquement la Q-Table toutes les N minutes.")]
+        public float autoSaveIntervalMinutes = 0f;
 
         [Header("Debug Recompenses")]
         [Tooltip("Affiche dans la console chaque appel a ApplyRewardFlag (flag recu, valeur appliquee, ou erreur si flag introuvable).")]
@@ -78,6 +78,7 @@ namespace Pluminus.Core
         private float sessionTotalReward = 0f;
         private int totalEpisodes = 0;
         private float statsTimer = 0f;
+        private float autoSaveTimer = 0f;
 
         // Nouvelles metrics demandées
         private int positiveRewardCount = 0;
@@ -254,6 +255,22 @@ namespace Pluminus.Core
 
                 statsTimer = 0;
             }
+
+            // Auto-save periodique de la Q-Table
+            if (autoSaveIntervalMinutes > 0f && memoryAsset != null)
+            {
+                autoSaveTimer += Time.unscaledDeltaTime;
+                if (autoSaveTimer >= autoSaveIntervalMinutes * 60f)
+                {
+                    autoSaveTimer = 0f;
+                    ExportBrain(memoryAsset);
+#if UNITY_EDITOR
+                    UnityEditor.EditorUtility.SetDirty(memoryAsset);
+                    UnityEditor.AssetDatabase.SaveAssets();
+#endif
+                    Debug.Log($"<color=cyan>[Pluminus AutoSave]</color> '{gameObject.name}' -> Q-Table sauvegardee ({memoryAsset.stateIds.Count} etats, episode {totalEpisodes})");
+                }
+            }
         }
 
         /// <summary>
@@ -287,17 +304,6 @@ namespace Pluminus.Core
 
             totalEpisodes++;
             currentEpisodeTotalReward = 0;
-
-            // Auto-save periodique de la Q-Table
-            if (autoSaveEveryNEpisodes > 0 && memoryAsset != null && totalEpisodes % autoSaveEveryNEpisodes == 0)
-            {
-                ExportBrain(memoryAsset);
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(memoryAsset);
-                UnityEditor.AssetDatabase.SaveAssets();
-#endif
-                Debug.Log($"<color=cyan>[Pluminus AutoSave]</color> '{gameObject.name}' -> Q-Table sauvegardee (episode {totalEpisodes}, {memoryAsset.stateIds.Count} etats)");
-            }
 
             // Réinitialise l'historique d'apprentissage pour ne pas lier la mort au nouvel état
             previousState = -1;

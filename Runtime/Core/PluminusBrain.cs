@@ -51,6 +51,10 @@ namespace Pluminus.Core
         [Header("Mode Heuristique (Manuel)")]
         [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
         public bool useHeuristic = false;
+
+        [Header("Debug Recompenses")]
+        [Tooltip("Affiche dans la console chaque appel a ApplyRewardFlag (flag recu, valeur appliquee, ou erreur si flag introuvable).")]
+        public bool logRewards = false;
         
         // Historique court-terme pour l'apprentissage
         private int previousState = -1;
@@ -291,10 +295,20 @@ namespace Pluminus.Core
         /// <param name="flag">Le nom textuel de l'événement (ex: "TookDamage")</param>
         public void ApplyRewardFlag(string flag)
         {
-            // Cherche la valeur en points liée à ce mot clé dans le RewardProfile
-            if (rewardProfile != null && rewardProfile.TryGetReward(flag, out RewardEvent reward))
+            if (rewardProfile == null)
             {
+                if (logRewards) Debug.LogWarning($"<color=orange>[Pluminus Reward]</color> '{gameObject.name}' -> Flag '<b>{flag}</b>' ignore : aucun RewardProfile assigne !");
+                return;
+            }
+
+            if (rewardProfile.TryGetReward(flag, out RewardEvent reward))
+            {
+                if (logRewards) Debug.Log($"<color=green>[Pluminus Reward]</color> '{gameObject.name}' -> '<b>{flag}</b>' = <b>{reward.rewardValue:+0.##;-0.##}</b>{(reward.isTerminalState ? " [TERMINAL]" : "")} (total ep: {currentEpisodeTotalReward + reward.rewardValue:F2})");
                 AddReward(reward.rewardValue, reward.isTerminalState);
+            }
+            else
+            {
+                if (logRewards) Debug.LogWarning($"<color=red>[Pluminus Reward]</color> '{gameObject.name}' -> Flag '<b>{flag}</b>' introuvable dans le RewardProfile ! Verifiez l'orthographe.");
             }
         }
 

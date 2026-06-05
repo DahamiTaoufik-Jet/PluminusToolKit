@@ -52,6 +52,10 @@ namespace Pluminus.Core
         [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
         public bool useHeuristic = false;
 
+        [Header("Auto-Save")]
+        [Tooltip("Si > 0 et qu'un Memory Asset est assigne, exporte automatiquement la Q-Table tous les N episodes.")]
+        public int autoSaveEveryNEpisodes = 0;
+
         [Header("Debug Recompenses")]
         [Tooltip("Affiche dans la console chaque appel a ApplyRewardFlag (flag recu, valeur appliquee, ou erreur si flag introuvable).")]
         public bool logRewards = false;
@@ -283,7 +287,18 @@ namespace Pluminus.Core
 
             totalEpisodes++;
             currentEpisodeTotalReward = 0;
-            
+
+            // Auto-save periodique de la Q-Table
+            if (autoSaveEveryNEpisodes > 0 && memoryAsset != null && totalEpisodes % autoSaveEveryNEpisodes == 0)
+            {
+                ExportBrain(memoryAsset);
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.SetDirty(memoryAsset);
+                UnityEditor.AssetDatabase.SaveAssets();
+#endif
+                Debug.Log($"<color=cyan>[Pluminus AutoSave]</color> '{gameObject.name}' -> Q-Table sauvegardee (episode {totalEpisodes}, {memoryAsset.stateIds.Count} etats)");
+            }
+
             // Réinitialise l'historique d'apprentissage pour ne pas lier la mort au nouvel état
             previousState = -1;
             lastActionTaken = -1;

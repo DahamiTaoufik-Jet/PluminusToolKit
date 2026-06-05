@@ -303,7 +303,10 @@ namespace Pluminus.Core
 
             if (rewardProfile.TryGetReward(flag, out RewardEvent reward))
             {
-                if (logRewards) Debug.Log($"<color=green>[Pluminus Reward]</color> '{gameObject.name}' -> '<b>{flag}</b>' = <b>{reward.rewardValue:+0.##;-0.##}</b>{(reward.isTerminalState ? " [TERMINAL]" : "")} (total ep: {currentEpisodeTotalReward + reward.rewardValue:F2})");
+                if (logRewards)
+                {
+                    Debug.Log($"<color=green>[Pluminus Reward]</color> '{gameObject.name}' -> '<b>{flag}</b>' = <b>{reward.rewardValue:+0.##;-0.##}</b>{(reward.isTerminalState ? " [TERMINAL]" : "")}");
+                }
                 AddReward(reward.rewardValue, reward.isTerminalState);
             }
             else

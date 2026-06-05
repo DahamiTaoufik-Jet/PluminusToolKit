@@ -31,6 +31,7 @@ namespace Pluminus.Integration
 
         private Rigidbody rb3d;
         private Rigidbody2D rb2d;
+        private CharacterController cc;
 
         private void Start()
         {
@@ -54,6 +55,7 @@ namespace Pluminus.Integration
 
             rb3d = GetComponent<Rigidbody>();
             rb2d = GetComponent<Rigidbody2D>();
+            cc = GetComponent<CharacterController>();
         }
 
         /// <summary>
@@ -68,8 +70,14 @@ namespace Pluminus.Integration
 
             if (resetTransform)
             {
+                // CharacterController bloque transform.position — on le desactive temporairement
+                bool hadCC = cc != null && cc.enabled;
+                if (hadCC) cc.enabled = false;
+
                 transform.position = savedPosition;
                 transform.rotation = savedRotation;
+
+                if (hadCC) cc.enabled = true;
             }
 
             if (resetRigidbody)

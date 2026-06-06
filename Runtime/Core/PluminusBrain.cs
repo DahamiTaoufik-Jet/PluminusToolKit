@@ -56,6 +56,10 @@ namespace Pluminus.Core
         [Tooltip("Si > 0 et qu'un Memory Asset est assigne, exporte automatiquement la Q-Table toutes les N minutes.")]
         public float autoSaveIntervalMinutes = 0f;
 
+        [Header("Auto-Stop (Editor Only)")]
+        [Tooltip("Si > 0, arrete automatiquement le Play Mode apres N minutes (temps reel). Effectue un dernier auto-save avant l'arret.")]
+        public float autoStopAfterMinutes = 0f;
+
         [Header("Debug Recompenses")]
         [Tooltip("Affiche dans la console chaque appel a ApplyRewardFlag (flag recu, valeur appliquee, ou erreur si flag introuvable).")]
         public bool logRewards = false;
@@ -79,6 +83,7 @@ namespace Pluminus.Core
         private int totalEpisodes = 0;
         private float statsTimer = 0f;
         private float autoSaveTimer = 0f;
+        private float autoStopTimer = 0f;
 
         // Nouvelles metrics demandées
         private int positiveRewardCount = 0;
@@ -271,6 +276,27 @@ namespace Pluminus.Core
                     Debug.Log($"<color=cyan>[Pluminus AutoSave]</color> '{gameObject.name}' -> Q-Table sauvegardee ({memoryAsset.stateIds.Count} etats, episode {totalEpisodes})");
                 }
             }
+
+            // Auto-stop : arrete le Play Mode apres N minutes
+#if UNITY_EDITOR
+            if (autoStopAfterMinutes > 0f)
+            {
+                autoStopTimer += Time.unscaledDeltaTime;
+                if (autoStopTimer >= autoStopAfterMinutes * 60f)
+                {
+                    // Dernier save avant l'arret
+                    if (memoryAsset != null)
+                    {
+                        ExportBrain(memoryAsset);
+                        UnityEditor.EditorUtility.SetDirty(memoryAsset);
+                        UnityEditor.AssetDatabase.SaveAssets();
+                    }
+                    Debug.Log($"<color=yellow>[Pluminus AutoStop]</color> '{gameObject.name}' -> {autoStopAfterMinutes} min ecoulees. Arret du Play Mode. (episode {totalEpisodes}, epsilon {currentEpsilon:F4})");
+                    UnityEditor.EditorApplication.isPlaying = false;
+                    return;
+                }
+            }
+#endif
         }
 
         /// <summary>

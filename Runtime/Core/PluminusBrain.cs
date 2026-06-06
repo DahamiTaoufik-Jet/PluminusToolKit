@@ -6,12 +6,25 @@ using Pluminus.Integration;
 
 namespace Pluminus.Core
 {
+    public enum BrainMode
+    {
+        [Tooltip("L'IA apprend activement : explore, fait des erreurs, met a jour sa Q-Table.")]
+        Training,
+
+        [Tooltip("L'IA utilise sa Q-Table sans apprendre. Choisit toujours la meilleure action connue (epsilon = 0).")]
+        Exploitation
+    }
+
     /// <summary>
     /// Le composant principal à attacher sur votre ennemi dans Unity.
     /// Il fait le pont entre le moteur mathématique (QLearningEngine), la configuration, et votre jeu.
     /// </summary>
     public class PluminusBrain : MonoBehaviour
     {
+        [Header("Mode")]
+        [Tooltip("Training = apprend et explore. Exploitation = utilise la Q-Table telle quelle, sans apprendre.")]
+        public BrainMode brainMode = BrainMode.Training;
+
         [Header("Configuration")]
         [Tooltip("Le profil hyperparamètres. Plusieurs ennemis peuvent partager le même BrainConfig.")]
         public BrainConfig brainConfig;
@@ -106,9 +119,21 @@ namespace Pluminus.Core
             int totalActions = actionExecutor.GetMaxActions();
             learningEngine = new QLearningEngine(totalActions);
 
-            if (brainConfig != null)
+            if (brainMode == BrainMode.Exploitation)
             {
-                currentEpsilon = brainConfig.explorationRate; // Démarre au taux d'exploration choisi
+                currentEpsilon = 0f;
+                if (memoryAsset != null && memoryAsset.stateIds.Count > 0)
+                {
+                    ImportBrain(memoryAsset);
+                }
+                else
+                {
+                    Debug.LogWarning($"[Pluminus] '{gameObject.name}' en mode Exploitation mais aucune Q-Table chargee ! L'IA agira au hasard.");
+                }
+            }
+            else if (brainConfig != null)
+            {
+                currentEpsilon = brainConfig.explorationRate;
             }
         }
 
@@ -132,14 +157,14 @@ namespace Pluminus.Core
             int currentState = environmentObserver.GetCurrentStateId();
 
             // 2. APPRENDRE des conséquences de la décision précédente
-            if (brainConfig.isLearningEnabled && previousState != -1 && lastActionTaken != -1)
+            if (brainMode == BrainMode.Training && brainConfig.isLearningEnabled && previousState != -1 && lastActionTaken != -1)
             {
                 learningEngine.UpdateQValue(
-                    previousState, 
-                    lastActionTaken, 
-                    accumulatedReward, 
-                    currentState, 
-                    brainConfig.learningRate, 
+                    previousState,
+                    lastActionTaken,
+                    accumulatedReward,
+                    currentState,
+                    brainConfig.learningRate,
                     brainConfig.discountFactor
                 );
 
@@ -148,6 +173,10 @@ namespace Pluminus.Core
 
                 // On ne consomme les récompenses qu'une fois réellement attribuées à une transition.
                 // Sinon (pas d'action précédente), on les conserve pour la prochaine transition apprenable.
+                accumulatedReward = 0f;
+            }
+            else if (brainMode == BrainMode.Exploitation)
+            {
                 accumulatedReward = 0f;
             }
 

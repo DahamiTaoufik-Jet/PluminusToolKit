@@ -38,6 +38,12 @@ namespace Pluminus.Integration
         [Tooltip("Tous les cerveaux a gerer. Si vide, les detecte automatiquement au Start.")]
         public List<PluminusBrain> brains = new List<PluminusBrain>();
 
+        [Header("Auto-Stop (Editor Only)")]
+        [Tooltip("Si > 0, arrete automatiquement le Play Mode apres N minutes (temps reel). Sauvegarde tous les cerveaux avant l'arret.")]
+        public float autoStopAfterMinutes = 0f;
+
+        private float autoStopTimer = 0f;
+
         [Header("Gestion d'Episode (Mode Episode uniquement)")]
         [Tooltip("Declenche quand un episode se termine. Glissez vos PluminusResetable.ResetToInitial() et Health.ResetHealth() ici !")]
         public UnityEvent OnReset;
@@ -77,6 +83,30 @@ namespace Pluminus.Integration
             {
                 Application.targetFrameRate = -1;
             }
+
+            // Auto-stop : arrete le Play Mode apres N minutes reelles
+#if UNITY_EDITOR
+            if (autoStopAfterMinutes > 0f)
+            {
+                autoStopTimer += Time.unscaledDeltaTime;
+                if (autoStopTimer >= autoStopAfterMinutes * 60f)
+                {
+                    // Dernier save de tous les cerveaux
+                    foreach (var brain in brains)
+                    {
+                        if (brain != null && brain.memoryAsset != null)
+                        {
+                            brain.ExportBrain(brain.memoryAsset);
+                            UnityEditor.EditorUtility.SetDirty(brain.memoryAsset);
+                        }
+                    }
+                    UnityEditor.AssetDatabase.SaveAssets();
+                    Debug.Log($"<color=yellow>[Pluminus AutoStop]</color> {autoStopAfterMinutes} min ecoulees. Arret du Play Mode. ({brains.Count} cerveaux sauvegardes)");
+                    UnityEditor.EditorApplication.isPlaying = false;
+                    return;
+                }
+            }
+#endif
         }
 
         /// <summary>

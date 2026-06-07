@@ -43,14 +43,23 @@ namespace Pluminus.EditorTools
 
             EditorGUILayout.Space(10);
 
-            // Bouton de Debug rapide pour reset l'exploration manuellement en plein jeu
-            if (GUILayout.Button("Forcer l'Exploration (Reset Epsilon)"))
+            // Boutons de controle epsilon en live
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Explorer (Reset Epsilon)"))
             {
                 if (brain.brainConfig != null)
                 {
                     brain.SetCurrentEpsilon(brain.brainConfig.explorationRate);
                 }
             }
+
+            if (GUILayout.Button("Exploiter (Epsilon = 0)"))
+            {
+                brain.SetCurrentEpsilon(0f);
+            }
+
+            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
 

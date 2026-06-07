@@ -65,6 +65,12 @@ namespace Pluminus.Core
         [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
         public bool useHeuristic = false;
 
+        [Header("Anti-Idle")]
+        [Tooltip("Si > 0, punit l'IA et termine l'episode si elle repete la meme action N fois de suite.")]
+        public int maxConsecutiveSameAction = 0;
+        [Tooltip("Penalite appliquee quand l'IA idle trop (valeur negative).")]
+        public float idlePenalty = -5f;
+
         [Header("Auto-Save")]
         [Tooltip("Si > 0 et qu'un Memory Asset est assigne, exporte automatiquement la Q-Table toutes les N minutes.")]
         public float autoSaveIntervalMinutes = 0f;
@@ -76,6 +82,7 @@ namespace Pluminus.Core
         // Historique court-terme pour l'apprentissage
         private int previousState = -1;
         private int lastActionTaken = -1;
+        private int consecutiveSameActionCount = 0;
         private float currentEpsilon; // Le taux d'exploration actuel (qui diminue avec le temps)
 
         private float accumulatedReward = 0f; // Les points accumulés depuis la dernière action
@@ -207,7 +214,26 @@ namespace Pluminus.Core
                 if (OnActionExecuted != null) OnActionExecuted.Invoke(chosenAction);
             }
 
-            // 5. Mémoriser ce qu'on vient de faire pour pouvoir apprendre la prochaine fois
+            // 5. Anti-Idle : detecte les repetitions excessives de la meme action
+            if (maxConsecutiveSameAction > 0 && chosenAction != -1)
+            {
+                if (chosenAction == lastActionTaken)
+                {
+                    consecutiveSameActionCount++;
+                    if (consecutiveSameActionCount >= maxConsecutiveSameAction)
+                    {
+                        Debug.Log($"<color=red>[Pluminus Anti-Idle]</color> '{gameObject.name}' -> action {chosenAction} repetee {consecutiveSameActionCount}x. Penalite {idlePenalty} + fin d'episode.");
+                        AddReward(idlePenalty, true);
+                        consecutiveSameActionCount = 0;
+                    }
+                }
+                else
+                {
+                    consecutiveSameActionCount = 0;
+                }
+            }
+
+            // 6. Mémoriser ce qu'on vient de faire pour pouvoir apprendre la prochaine fois
             previousState = currentState;
             lastActionTaken = chosenAction;
         }
@@ -338,6 +364,7 @@ namespace Pluminus.Core
             // Réinitialise l'historique d'apprentissage pour ne pas lier la mort au nouvel état
             previousState = -1;
             lastActionTaken = -1;
+            consecutiveSameActionCount = 0;
         }
 
         /// <summary>

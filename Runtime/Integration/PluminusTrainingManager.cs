@@ -6,7 +6,7 @@ using Pluminus.Core;
 namespace Pluminus.Integration
 {
     /// <summary>
-    /// Une phase de curriculum : apres N episodes, debloque certaines actions sur un ActionRouter cible.
+    /// Une phase de curriculum : apres N episodes, debloque certaines actions sur des ActionRouters cibles.
     /// </summary>
     [System.Serializable]
     public class CurriculumPhase
@@ -17,10 +17,27 @@ namespace Pluminus.Integration
         [Tooltip("Nombre d'episodes avant de passer a cette phase. Phase 0 = au demarrage.")]
         public int startAtEpisode = 0;
 
-        [Tooltip("L'ActionRouter sur lequel appliquer le masque d'actions.")]
+        [Tooltip("Si coche, reset l'epsilon de tous les cerveaux au debut de cette phase pour explorer les nouvelles actions.")]
+        public bool resetEpsilonOnEnter = false;
+
+        [Tooltip("Valeur d'epsilon a appliquer au debut de cette phase. 0 = reprend la valeur initiale du BrainConfig.")]
+        [Range(0f, 1f)]
+        public float epsilonOnEnter = 0f;
+
+        [Tooltip("Masques d'actions a appliquer. Chaque entree cible un ActionRouter different.")]
+        public List<CurriculumActionMask> actionMasks = new List<CurriculumActionMask>();
+    }
+
+    /// <summary>
+    /// Masque d'actions pour un ActionRouter specifique dans une phase de curriculum.
+    /// </summary>
+    [System.Serializable]
+    public class CurriculumActionMask
+    {
+        [Tooltip("L'ActionRouter sur lequel appliquer le masque.")]
         public PluminusActionRouter targetRouter;
 
-        [Tooltip("Les index des actions autorisees pendant cette phase. Ex: [0, 3, 4] = Idle + DodgeLeft + DodgeRight.")]
+        [Tooltip("Les index des actions autorisees pendant cette phase.")]
         public int[] allowedActions;
     }
 
@@ -190,16 +207,46 @@ namespace Pluminus.Integration
             CurriculumPhase phase = curriculum[phaseIndex];
             currentPhaseIndex = phaseIndex;
 
-            if (phase.targetRouter != null && phase.allowedActions != null && phase.allowedActions.Length > 0)
+            // Applique les masques d'actions sur chaque router cible
+            int totalActions = 0;
+            for (int i = 0; i < phase.actionMasks.Count; i++)
             {
-                phase.targetRouter.EnableOnlyActions(phase.allowedActions);
-            }
-            else if (phase.targetRouter != null)
-            {
-                phase.targetRouter.EnableAllActions();
+                CurriculumActionMask mask = phase.actionMasks[i];
+                if (mask.targetRouter == null) continue;
+
+                if (mask.allowedActions != null && mask.allowedActions.Length > 0)
+                {
+                    mask.targetRouter.EnableOnlyActions(mask.allowedActions);
+                    totalActions += mask.allowedActions.Length;
+                }
+                else
+                {
+                    mask.targetRouter.EnableAllActions();
+                    totalActions += mask.targetRouter.GetMaxActions();
+                }
             }
 
-            Debug.Log($"<color=cyan>[Pluminus Curriculum]</color> Phase {phaseIndex + 1}/{curriculum.Count} : '<b>{phase.phaseName}</b>' (episode {totalEpisodesGlobal}, {(phase.allowedActions != null ? phase.allowedActions.Length : 0)} actions actives)");
+            // Reset epsilon sur tous les cerveaux si demande
+            if (phase.resetEpsilonOnEnter)
+            {
+                for (int i = 0; i < brains.Count; i++)
+                {
+                    if (brains[i] == null) continue;
+
+                    if (phase.epsilonOnEnter > 0f)
+                    {
+                        brains[i].SetCurrentEpsilon(phase.epsilonOnEnter);
+                    }
+                    else
+                    {
+                        // Reprend l'epsilon initial du brain config
+                        brains[i].ResetEpsilonToInitial();
+                    }
+                }
+                Debug.Log($"<color=cyan>[Pluminus Curriculum]</color> Epsilon reset sur {brains.Count} cerveaux (target: {(phase.epsilonOnEnter > 0f ? phase.epsilonOnEnter.ToString("F2") : "initial")})");
+            }
+
+            Debug.Log($"<color=cyan>[Pluminus Curriculum]</color> Phase {phaseIndex + 1}/{curriculum.Count} : '<b>{phase.phaseName}</b>' (episode {totalEpisodesGlobal}, {phase.actionMasks.Count} routers, {totalActions} actions actives)");
         }
     }
 }

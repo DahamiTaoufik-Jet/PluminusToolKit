@@ -437,7 +437,17 @@ namespace Pluminus.Core
         public float GetCurrentEpsilon() => currentEpsilon;
 
         public void SetCurrentEpsilon(float value) => currentEpsilon = value;
-        
+
+        /// <summary>
+        /// Remet l'epsilon a la valeur initiale du BrainConfig (explorationRate).
+        /// Utilise par le curriculum pour forcer la re-exploration apres un changement de phase.
+        /// </summary>
+        public void ResetEpsilonToInitial()
+        {
+            if (brainConfig != null)
+                currentEpsilon = brainConfig.explorationRate;
+        }
+
         // --- Fonctions de Sauvegarde et Chargement ---
 
         /// <summary>

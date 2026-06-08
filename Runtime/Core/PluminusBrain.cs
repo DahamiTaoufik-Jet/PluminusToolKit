@@ -68,6 +68,9 @@ namespace Pluminus.Core
         [Header("Epsilon Scheduler")]
         [Tooltip("Si > 0, reset automatiquement l'epsilon tous les N episodes. Cree des cycles exploration/exploitation.")]
         public int resetEpsilonEveryNEpisodes = 0;
+        [Tooltip("Si > 0, reset l'epsilon quand il descend en dessous de ce seuil. Ex: 0.05 = reset des que l'epsilon atteint 5%.")]
+        [Range(0f, 1f)]
+        public float resetEpsilonAtThreshold = 0f;
         [Tooltip("Valeur cible de l'epsilon lors du reset automatique. 0 = reprend la valeur initiale du BrainConfig.")]
         [Range(0f, 1f)]
         public float resetEpsilonTarget = 0f;
@@ -184,6 +187,14 @@ namespace Pluminus.Core
 
                 // Réduit très légèrement le taux d'exploration pour stabiliser l'IA au fil du temps
                 currentEpsilon = Mathf.Max(brainConfig.minExplorationRate, currentEpsilon * brainConfig.explorationDecayRate);
+
+                // Epsilon Scheduler : reset quand epsilon atteint le seuil
+                if (resetEpsilonAtThreshold > 0f && currentEpsilon <= resetEpsilonAtThreshold)
+                {
+                    float target = resetEpsilonTarget > 0f ? resetEpsilonTarget : brainConfig.explorationRate;
+                    Debug.Log($"<color=yellow>[Pluminus Scheduler]</color> '{gameObject.name}' -> Epsilon {currentEpsilon:P1} <= seuil {resetEpsilonAtThreshold:P1}. Reset a {target:P0}");
+                    currentEpsilon = target;
+                }
 
                 // On ne consomme les récompenses qu'une fois réellement attribuées à une transition.
                 // Sinon (pas d'action précédente), on les conserve pour la prochaine transition apprenable.

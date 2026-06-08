@@ -65,6 +65,13 @@ namespace Pluminus.Core
         [Tooltip("Si coché, l'IA ignore son propre cerveau et exécute les actions envoyées par le joueur (pour debug/test).")]
         public bool useHeuristic = false;
 
+        [Header("Epsilon Scheduler")]
+        [Tooltip("Si > 0, reset automatiquement l'epsilon tous les N episodes. Cree des cycles exploration/exploitation.")]
+        public int resetEpsilonEveryNEpisodes = 0;
+        [Tooltip("Valeur cible de l'epsilon lors du reset automatique. 0 = reprend la valeur initiale du BrainConfig.")]
+        [Range(0f, 1f)]
+        public float resetEpsilonTarget = 0f;
+
         [Header("Anti-Idle")]
         [Tooltip("Si > 0, punit l'IA et termine l'episode si elle repete la meme action N fois de suite.")]
         public int maxConsecutiveSameAction = 0;
@@ -360,6 +367,14 @@ namespace Pluminus.Core
 
             totalEpisodes++;
             currentEpisodeTotalReward = 0;
+
+            // Epsilon Scheduler : reset periodique de l'exploration
+            if (brainMode == BrainMode.Training && resetEpsilonEveryNEpisodes > 0 && totalEpisodes % resetEpsilonEveryNEpisodes == 0)
+            {
+                float target = resetEpsilonTarget > 0f ? resetEpsilonTarget : (brainConfig != null ? brainConfig.explorationRate : 0.2f);
+                currentEpsilon = target;
+                Debug.Log($"<color=yellow>[Pluminus Scheduler]</color> '{gameObject.name}' -> Epsilon reset a {target:P0} (episode {totalEpisodes})");
+            }
 
             // Réinitialise l'historique d'apprentissage pour ne pas lier la mort au nouvel état
             previousState = -1;

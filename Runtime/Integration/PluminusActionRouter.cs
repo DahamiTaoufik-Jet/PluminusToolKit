@@ -16,6 +16,9 @@ namespace Pluminus.Integration
         [Tooltip("Chaque événement ici correspond à un ID d'action de l'IA (Index 0 = Action 0, etc.)")]
         public List<UnityEvent> actions = new List<UnityEvent>();
 
+        // Masque d'actions : si non-vide, seuls les index a true sont autorises
+        private bool[] actionMask;
+
         public void ExecuteAction(int actionId)
         {
             if (actionId >= 0 && actionId < actions.Count)
@@ -35,9 +38,56 @@ namespace Pluminus.Integration
 
         public bool IsActionValid(int actionId)
         {
-            // Par défaut dans le Router, toutes les actions configurées sont valides.
-            // On pourrait ajouter des cooldowns ici plus tard.
-            return actionId >= 0 && actionId < actions.Count;
+            if (actionId < 0 || actionId >= actions.Count) return false;
+            if (actionMask != null && actionMask.Length == actions.Count) return actionMask[actionId];
+            return true;
+        }
+
+        /// <summary>
+        /// Active ou desactive une action par son index.
+        /// Les actions desactivees ne seront jamais choisies par le cerveau.
+        /// </summary>
+        public void SetActionEnabled(int actionId, bool enabled)
+        {
+            EnsureMask();
+            if (actionId >= 0 && actionId < actionMask.Length)
+                actionMask[actionId] = enabled;
+        }
+
+        /// <summary>
+        /// Active toutes les actions.
+        /// </summary>
+        public void EnableAllActions()
+        {
+            EnsureMask();
+            for (int i = 0; i < actionMask.Length; i++)
+                actionMask[i] = true;
+        }
+
+        /// <summary>
+        /// Desactive toutes les actions sauf celles listees.
+        /// </summary>
+        public void EnableOnlyActions(int[] allowedIds)
+        {
+            EnsureMask();
+            for (int i = 0; i < actionMask.Length; i++)
+                actionMask[i] = false;
+            for (int i = 0; i < allowedIds.Length; i++)
+            {
+                int id = allowedIds[i];
+                if (id >= 0 && id < actionMask.Length)
+                    actionMask[id] = true;
+            }
+        }
+
+        private void EnsureMask()
+        {
+            if (actionMask == null || actionMask.Length != actions.Count)
+            {
+                actionMask = new bool[actions.Count];
+                for (int i = 0; i < actionMask.Length; i++)
+                    actionMask[i] = true;
+            }
         }
     }
 }

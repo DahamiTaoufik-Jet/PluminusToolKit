@@ -5,6 +5,25 @@ using Pluminus.Core;
 
 namespace Pluminus.Integration
 {
+    /// <summary>
+    /// Une phase de curriculum : apres N episodes, debloque certaines actions sur un ActionRouter cible.
+    /// </summary>
+    [System.Serializable]
+    public class CurriculumPhase
+    {
+        [Tooltip("Nom de la phase pour s'y retrouver dans l'inspecteur.")]
+        public string phaseName = "Nouvelle Phase";
+
+        [Tooltip("Nombre d'episodes avant de passer a cette phase. Phase 0 = au demarrage.")]
+        public int startAtEpisode = 0;
+
+        [Tooltip("L'ActionRouter sur lequel appliquer le masque d'actions.")]
+        public PluminusActionRouter targetRouter;
+
+        [Tooltip("Les index des actions autorisees pendant cette phase. Ex: [0, 3, 4] = Idle + DodgeLeft + DodgeRight.")]
+        public int[] allowedActions;
+    }
+
     public enum TrainingMode
     {
         [Tooltip("L'agent tourne en continu sans jamais se reinitialiser. Ideal pour un ennemi qui s'adapte en temps reel au joueur.")]
@@ -44,6 +63,13 @@ namespace Pluminus.Integration
 
         private float autoStopTimer = 0f;
 
+        [Header("Curriculum (Optionnel)")]
+        [Tooltip("Phases progressives d'entrainement. Chaque phase debloque de nouvelles actions apres N episodes. Laissez vide pour desactiver.")]
+        public List<CurriculumPhase> curriculum = new List<CurriculumPhase>();
+
+        private int currentPhaseIndex = -1;
+        private int totalEpisodesGlobal = 0;
+
         [Header("Gestion d'Episode (Mode Episode uniquement)")]
         [Tooltip("Declenche quand un episode se termine. Glissez vos PluminusResetable.ResetToInitial() et Health.ResetHealth() ici !")]
         public UnityEvent OnReset;
@@ -62,6 +88,12 @@ namespace Pluminus.Integration
             if (brains.Count == 0)
             {
                 Debug.LogWarning("[Pluminus] TrainingManager: Aucun PluminusBrain trouve dans la scene !");
+            }
+
+            // Applique la phase initiale du curriculum
+            if (curriculum.Count > 0)
+            {
+                ApplyCurriculumPhase(0);
             }
         }
 
@@ -120,11 +152,54 @@ namespace Pluminus.Integration
                 if (brain != null) brain.EndEpisode();
             }
 
+            totalEpisodesGlobal++;
+
+            // Verifie si on doit passer a la phase suivante du curriculum
+            if (curriculum.Count > 0)
+            {
+                CheckCurriculumProgress();
+            }
+
             if (trainingMode == TrainingMode.Episode)
             {
                 OnReset?.Invoke();
-                Debug.Log($"<color=green>[Pluminus] Episode Reset global ({brains.Count} cerveaux)</color>");
+                Debug.Log($"<color=green>[Pluminus] Episode Reset global ({brains.Count} cerveaux, ep. {totalEpisodesGlobal})</color>");
             }
+        }
+
+        private void CheckCurriculumProgress()
+        {
+            // Cherche la phase la plus avancee a laquelle on a droit
+            int bestPhase = currentPhaseIndex;
+            for (int i = 0; i < curriculum.Count; i++)
+            {
+                if (totalEpisodesGlobal >= curriculum[i].startAtEpisode)
+                    bestPhase = i;
+            }
+
+            if (bestPhase != currentPhaseIndex)
+            {
+                ApplyCurriculumPhase(bestPhase);
+            }
+        }
+
+        private void ApplyCurriculumPhase(int phaseIndex)
+        {
+            if (phaseIndex < 0 || phaseIndex >= curriculum.Count) return;
+
+            CurriculumPhase phase = curriculum[phaseIndex];
+            currentPhaseIndex = phaseIndex;
+
+            if (phase.targetRouter != null && phase.allowedActions != null && phase.allowedActions.Length > 0)
+            {
+                phase.targetRouter.EnableOnlyActions(phase.allowedActions);
+            }
+            else if (phase.targetRouter != null)
+            {
+                phase.targetRouter.EnableAllActions();
+            }
+
+            Debug.Log($"<color=cyan>[Pluminus Curriculum]</color> Phase {phaseIndex + 1}/{curriculum.Count} : '<b>{phase.phaseName}</b>' (episode {totalEpisodesGlobal}, {(phase.allowedActions != null ? phase.allowedActions.Length : 0)} actions actives)");
         }
     }
 }

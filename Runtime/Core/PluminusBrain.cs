@@ -36,8 +36,8 @@ namespace Pluminus.Core
         [Tooltip("Le fichier de sauvegarde (QTableData) contenant la mémoire entraînée de l'IA.")]
         public QTableData memoryAsset;
 
-        [Header("No-Code Events")]
-        [Tooltip("Déclenché à chaque fois que l'IA exécute une action (Renvoie l'ID de l'action).")]
+        /// <summary>Utilise en interne par PluminusRuleEngine. Non affiche dans l'Inspector.</summary>
+        [HideInInspector]
         public UnityEvent<int> OnActionExecuted;
 
         [Header("Composants (Auto-détectés)")]

@@ -30,8 +30,8 @@ namespace Pluminus.Data
         [Tooltip("A quelle vitesse l'exploration diminue à chaque apprentissage. (ex: 0.99 réduit l'aléatoire de 1% à chaque action)")]
         public float explorationDecayRate = 0.99f;
 
-        [Header("Contrôles")]
-        [Tooltip("Si désactivé, l'IA utilisera ce qu'elle a déjà appris mais n'apprendra plus rien de nouveau.")]
+        /// <summary>Toujours true. Le controle Training/Exploitation se fait via BrainMode sur PluminusBrain.</summary>
+        [HideInInspector]
         public bool isLearningEnabled = true;
     }
 }

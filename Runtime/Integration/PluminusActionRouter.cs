@@ -18,11 +18,18 @@ namespace Pluminus.Integration
 
         // Masque d'actions : si non-vide, seuls les index a true sont autorises
         private bool[] actionMask;
+        private int lastExecutedAction = -1;
+        private float lastExecutedTime;
+
+        public int LastExecutedAction => lastExecutedAction;
+        public float LastExecutedTime => lastExecutedTime;
 
         public void ExecuteAction(int actionId)
         {
             if (actionId >= 0 && actionId < actions.Count)
             {
+                lastExecutedAction = actionId;
+                lastExecutedTime = Time.time;
                 actions[actionId].Invoke();
             }
             else

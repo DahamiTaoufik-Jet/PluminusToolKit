@@ -38,7 +38,7 @@ namespace Pluminus.Core
 
         /// <summary>Utilise en interne par PluminusRuleEngine. Non affiche dans l'Inspector.</summary>
         [HideInInspector]
-        public UnityEvent<int> OnActionExecuted;
+        public UnityEvent<int> OnActionExecuted = new UnityEvent<int>();
 
         [Header("Composants (Auto-détectés)")]
         [Tooltip("Le script qui observe l'environnement (ex: UnityStateBuilder)")]

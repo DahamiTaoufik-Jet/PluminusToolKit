@@ -59,11 +59,27 @@ namespace Pluminus.Sensors
 #if UNITY_EDITOR
         public int GetTheoreticalMaxStates()
         {
+            List<PluminusStateSensor> allSensors = new List<PluminusStateSensor>();
+
+            // Sensors locaux (enfants)
             PluminusStateSensor[] childrenSensors = GetComponentsInChildren<PluminusStateSensor>();
-            if (childrenSensors.Length == 0) return 1;
+            foreach (var s in childrenSensors)
+            {
+                if (!allSensors.Contains(s)) allSensors.Add(s);
+            }
+
+            // Sensors externes qui pointent vers cet Eyes
+            PluminusStateSensor[] allSceneSensors = FindObjectsByType<PluminusStateSensor>(FindObjectsSortMode.None);
+            foreach (var s in allSceneSensors)
+            {
+                if (s.targetEyes == this && !allSensors.Contains(s))
+                    allSensors.Add(s);
+            }
+
+            if (allSensors.Count == 0) return 1;
 
             int totalStates = 1;
-            foreach (var sensor in childrenSensors)
+            foreach (var sensor in allSensors)
             {
                 int count = sensor.GetSubStateCount();
                 if (count > 0)

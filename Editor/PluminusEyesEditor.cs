@@ -20,15 +20,16 @@ namespace Pluminus.Sensors.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Capteurs Actifs", EditorStyles.boldLabel);
 
-            var sensors = builder.GetLoadedSensors();
-            
+            // En Play mode : sensors charges, sinon : scan theorique
+            var sensors = Application.isPlaying ? builder.GetLoadedSensors() : GetAllSensorsForEyes(builder);
+
             if (sensors == null || sensors.Count == 0)
             {
                 EditorGUILayout.HelpBox("Ajoutez des capteurs (ex: DistanceToTargetSensor) via 'Add Component' pour commencer.", MessageType.Warning);
             }
             else
             {
-                int totalStates = builder.GetMaxStates();
+                int totalStates = Application.isPlaying ? builder.GetMaxStates() : builder.GetTheoreticalMaxStates();
                 
                 GUIStyle sensorStyle = new GUIStyle(EditorStyles.helpBox);
                 foreach (var sensor in sensors)
@@ -60,6 +61,23 @@ namespace Pluminus.Sensors.Editor
 
             EditorGUILayout.Space(10);
             DrawDefaultInspector();
+        }
+
+        private System.Collections.Generic.List<PluminusStateSensor> GetAllSensorsForEyes(PluminusEyes eyes)
+        {
+            var result = new System.Collections.Generic.List<PluminusStateSensor>();
+            var children = eyes.GetComponentsInChildren<PluminusStateSensor>();
+            foreach (var s in children)
+            {
+                if (!result.Contains(s)) result.Add(s);
+            }
+            var allScene = Object.FindObjectsByType<PluminusStateSensor>(FindObjectsSortMode.None);
+            foreach (var s in allScene)
+            {
+                if (s.targetEyes == eyes && !result.Contains(s))
+                    result.Add(s);
+            }
+            return result;
         }
     }
 }

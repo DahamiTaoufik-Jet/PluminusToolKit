@@ -10,14 +10,23 @@ namespace Pluminus.Sensors.Extended
         public bool autoFindPlayerTag = true;
 
         [Header("Configuration")]
-        [Tooltip("Nombre de secteurs. Supporte jusqu'à 32 pour une précision extrême.")]
+        [Tooltip("Nombre de secteurs dans l'arc de detection.")]
         [Range(2, 32)]
         public int numberOfSectors = 8;
+
+        [Tooltip("Angle total de l'arc de detection en degres. 360 = cercle complet, 180 = demi-cercle, 90 = quart de cercle.")]
+        [Range(1f, 360f)]
+        public float arcAngle = 360f;
+
+        [Tooltip("Decalage de l'arc par rapport a l'avant du transform (0 = centre sur forward).")]
+        [Range(-180f, 180f)]
+        public float arcOffset = 0f;
 
         [Header("Visualisation")]
         public Color diskColor = new Color(0, 1, 1, 0.1f);
         public float visualRadius = 3f;
 
+        // Etat 0 = cible absente ou hors arc
         public override int GetSubStateCount() => numberOfSectors + 1;
 
         protected override void Awake()
@@ -36,37 +45,68 @@ namespace Pluminus.Sensors.Extended
 
             Vector3 directionToTarget = target.position - transform.position;
             directionToTarget.y = 0;
-            
+
             if (directionToTarget.sqrMagnitude < 0.001f) return 0;
 
             float angle = Vector3.SignedAngle(transform.forward, directionToTarget.normalized, Vector3.up);
-            if (angle < 0) angle += 360f;
 
-            float sectorSize = 360f / numberOfSectors;
-            float shiftedAngle = angle + (sectorSize / 2f);
-            if (shiftedAngle >= 360f) shiftedAngle -= 360f;
+            // Applique l'offset et ramene dans [-180, 180]
+            float relative = angle - arcOffset;
+            if (relative > 180f) relative -= 360f;
+            if (relative < -180f) relative += 360f;
 
-            return Mathf.FloorToInt(shiftedAngle / sectorSize) + 1;
+            float halfArc = arcAngle / 2f;
+
+            // Hors de l'arc de detection
+            if (relative < -halfArc || relative > halfArc) return 0;
+
+            // Normalise dans [0, arcAngle]
+            float normalized = relative + halfArc;
+            float sectorSize = arcAngle / numberOfSectors;
+
+            int sector = Mathf.FloorToInt(normalized / sectorSize);
+            if (sector >= numberOfSectors) sector = numberOfSectors - 1;
+
+            return sector + 1;
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = diskColor;
-            Matrix4x4 oldMatrix = Gizmos.matrix;
-            Gizmos.matrix = Matrix4x4.TRS(transform.position, Quaternion.identity, new Vector3(1, 0.01f, 1));
-            Gizmos.DrawSphere(Vector3.zero, visualRadius);
-            Gizmos.matrix = oldMatrix;
+            float halfArc = arcAngle / 2f;
+            float sectorSize = arcAngle / numberOfSectors;
 
-            float sectorSize = 360f / numberOfSectors;
-            Gizmos.color = new Color(diskColor.r, diskColor.g, diskColor.b, 0.5f);
-            
-            for (int i = 0; i < numberOfSectors; i++)
+            // Dessine l'arc
+            Gizmos.color = diskColor;
+            int segments = 40;
+            float startAngle = -halfArc + arcOffset;
+            float endAngle = halfArc + arcOffset;
+            float step = (endAngle - startAngle) / segments;
+
+            Vector3 prevPoint = transform.position + Quaternion.Euler(0, startAngle, 0) * transform.forward * visualRadius;
+            for (int i = 1; i <= segments; i++)
             {
-                float angle = (i * sectorSize) - (sectorSize / 2f);
-                Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
+                float a = startAngle + step * i;
+                Vector3 point = transform.position + Quaternion.Euler(0, a, 0) * transform.forward * visualRadius;
+                Gizmos.DrawLine(prevPoint, point);
+                prevPoint = point;
+            }
+
+            // Lignes de bord de l'arc
+            Vector3 leftEdge = Quaternion.Euler(0, startAngle, 0) * transform.forward;
+            Vector3 rightEdge = Quaternion.Euler(0, endAngle, 0) * transform.forward;
+            Gizmos.DrawLine(transform.position, transform.position + leftEdge * visualRadius);
+            Gizmos.DrawLine(transform.position, transform.position + rightEdge * visualRadius);
+
+            // Lignes de separation des secteurs
+            Gizmos.color = new Color(diskColor.r, diskColor.g, diskColor.b, 0.5f);
+            for (int i = 1; i < numberOfSectors; i++)
+            {
+                float a = startAngle + sectorSize * i;
+                Vector3 dir = Quaternion.Euler(0, a, 0) * transform.forward;
                 Gizmos.DrawLine(transform.position, transform.position + dir * visualRadius);
             }
 
+            // Ligne vers la cible
             if (target != null)
             {
                 Gizmos.color = Color.yellow;
